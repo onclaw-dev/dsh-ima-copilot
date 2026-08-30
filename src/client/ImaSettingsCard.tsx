@@ -1,15 +1,14 @@
 import { useCallback, useEffect, useState, type CSSProperties } from 'react'
-import type { IApiClient } from '@deepseek-ai/dsh-client-connection/client'
 import type { InjectFace, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-settings-plugins/client'
 import {
-  IMA_RUNTIME_REFS, describeImaSettings, saveImaSettings, type CredentialState,
+  IMA_RUNTIME_REFS, describeImaSettings, saveImaSettings, type CredentialState, type CredentialsRemote,
 } from './credentials.js'
 import { IMA_CREDENTIAL_REFS, IMA_KNOWLEDGE_BASE_IDS_REF } from '../credential-refs.js'
 
 /** Injected browser operations for the IMA settings card. */
 export interface ImaSettingsCardFace {
-  credentials: Pick<IApiClient, 'credentials'>['credentials']
+  credentials: CredentialsRemote
 }
 
 type ImaSettingsCardProps = PropsRuntime<'settings.plugin.item'> & InjectFace<ImaSettingsCardFace>

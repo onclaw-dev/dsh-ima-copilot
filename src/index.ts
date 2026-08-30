@@ -1,6 +1,7 @@
 /** Native DeepSeek Harness Host plugin for Tencent IMA Copilot. */
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-credentials'
+import type {} from '@deepseek-ai/dsh-settings'
 import type {} from '@deepseek-ai/dsh-tools'
 import { Config, resolveConfig, type Config as ImaPluginConfig } from './config.js'
 import { ImaClient } from './ima-client.js'
@@ -25,16 +26,33 @@ export const name = 'dsh-ima-copilot'
 /** Harness services required by the Host entry. */
 export const inject = ['tools', 'credentials']
 
+/** Settings namespace paired with the Web configuration card. */
+export const IMA_SETTINGS_NAMESPACE = 'ima-copilot'
+
 /**
  * Register the native IMA tool for this plugin fiber.
  * @param ctx - Harness Host context.
  * @param config - validated bundle configuration.
  */
 export function apply(ctx: Context, config: ImaPluginConfig): void {
-  const resolved = resolveConfig(config)
-  const client = new ImaClient(resolved)
-  ctx.effect(
-    () => ctx.tools.register(createImaTool(ctx, resolved, client)),
-    'ima-copilot: native tool registration',
-  )
+  let source: () => ImaPluginConfig = () => config
+  let disposeTool: () => void = () => {}
+  const registerTool = (): void => {
+    disposeTool()
+    const resolved = resolveConfig(source())
+    disposeTool = ctx.tools.register(createImaTool(ctx, resolved, new ImaClient(resolved)))
+  }
+
+  ctx.effect(() => {
+    registerTool()
+    return () => { disposeTool() }
+  }, 'ima-copilot: native tool registration')
+
+  ctx.inject(['settings'], (settingsCtx) => {
+    settingsCtx.settings.installSection(ctx, IMA_SETTINGS_NAMESPACE, Config, config, {
+      setSource: (current) => { source = current },
+      onChange: registerTool,
+      validate: resolveConfig,
+    })
+  })
 }

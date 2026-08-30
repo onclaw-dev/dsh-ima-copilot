@@ -1,4 +1,4 @@
-import type { IApiClient } from '@deepseek-ai/dsh-client-connection/client'
+import type { ClientRemote } from '@deepseek-ai/dsh-api-remotes/client'
 import { IMA_RUNTIME_REFS } from '../credential-refs.js'
 
 export { IMA_RUNTIME_REFS }
@@ -10,19 +10,22 @@ export interface CredentialState {
   source?: string
 }
 
+/** Credential Remote namespace selected by the Web Client assembly. */
+export type CredentialsRemote = ClientRemote['credentials']
+
 /**
  * Describe IMA references without reading secret literals.
  * @param credentials - Harness credential wire API.
  * @returns safe status keyed by reference.
  */
 export async function describeImaSettings(
-  credentials: Pick<IApiClient, 'credentials'>['credentials'],
+  credentials: Pick<CredentialsRemote, 'describe'>,
 ): Promise<Record<string, CredentialState>> {
-  const response = await credentials.describe({ refs: [...IMA_RUNTIME_REFS] })
-  if (!response.result.ok) throw new Error(response.result.error.message)
+  const response = await credentials.describe([...IMA_RUNTIME_REFS])
+  if (!response.ok) throw new Error(response.error.message)
   const next: Record<string, CredentialState> = {}
   for (const ref of IMA_RUNTIME_REFS) {
-    const view = response.result.value.credentials[ref]
+    const view = response.value[ref]
     next[ref] = {
       configured: view?.configured ?? false,
       writable: view?.writable ?? true,
@@ -38,11 +41,14 @@ export async function describeImaSettings(
  * @param values - user-entered values keyed by reference.
  */
 export async function saveImaSettings(
-  credentials: Pick<IApiClient, 'credentials'>['credentials'],
+  credentials: Pick<CredentialsRemote, 'set'>,
   values: Readonly<Record<string, string>>,
 ): Promise<void> {
   for (const ref of IMA_RUNTIME_REFS) {
     const value = values[ref]?.trim()
-    if (value !== undefined && value.length > 0) await credentials.set({ ref, value })
+    if (value !== undefined && value.length > 0) {
+      const response = await credentials.set(ref, value)
+      if (!response.ok) throw new Error(response.error.message)
+    }
   }
 }

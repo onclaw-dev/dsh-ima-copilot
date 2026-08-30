@@ -12,6 +12,8 @@ export { IMA_CREDENTIAL_REFS, IMA_KNOWLEDGE_BASE_IDS_REF, IMA_RUNTIME_REFS, IMA_
 export declare const name = "dsh-ima-copilot";
 /** Harness services required by the Host entry. */
 export declare const inject: string[];
+/** Settings namespace paired with the Web configuration card. */
+export declare const IMA_SETTINGS_NAMESPACE = "ima-copilot";
 /**
  * Register the native IMA tool for this plugin fiber.
  * @param ctx - Harness Host context.

@@ -18,8 +18,12 @@
 ## 环境要求
 
 - Node.js `^22.19.0` 或 `>=24.0.0`
-- DSH `0.1.0-rc.5`
+- DSH `0.1.2-alpha.2`
 - Web profile 需要 `@deepseek-ai/dsh-client-ui-settings-plugins`
+
+本版本对应 DeepSeek Harness Release
+[`dsh-v0.1.2-alpha.2`](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.1.2-alpha.2) 和提交
+[`0a53fb55bea101816fa226bb964ae2bed71c343b`](https://github.com/deepseek-ai/deepseek-harness/commit/0a53fb55bea101816fa226bb964ae2bed71c343b)。`package.json` 中的 `deepseekHarness` 记录了这一源码基线；本地链接脚本会同时校验提交和版本，避免误用其他破坏性迭代节点。
 
 > 本插件调用的是 IMA Web API，而非公开稳定 API；上游接口变化可能导致插件需要同步适配。
 
@@ -40,7 +44,7 @@ npm ci
 npm run link:harness -- <本地 DSH 仓库路径>
 npm run verify
 npm pack
-dsh plugin --profile web add .\dsh-ima-copilot-0.1.0.tgz
+dsh plugin --profile web add .\dsh-ima-copilot-0.1.2-alpha.2.ima.1.tgz
 dsh web
 ```
 
@@ -120,7 +124,7 @@ npm run build
 npm run verify:package
 ```
 
-当前 `rc.5` 的 DSH 开发包由本地 DSH 源码提供。链接完成后也可以用一条命令执行类型检查、测试和构建：
+当前 `0.1.2-alpha.2` 的 DSH 开发包可由上述精确提交的本地 DSH 源码提供。链接脚本不会把 monorepo 根目录冒充某个 workspace 包；它会校验提交后，分别链接插件实际使用的包。链接完成后也可以用一条命令执行类型检查、测试和构建：
 
 ```powershell
 npm run verify
