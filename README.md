@@ -25,12 +25,13 @@
 
 ## 安装
 
-从 npm 安装到 Web profile：
+直接使用github地址进行安装
 
 ```powershell
-dsh plugin --profile web add dsh-ima-copilot
+dsh plugin --profile web add https://github.com/onclaw-dev/dsh-ima-copilot.git
 dsh web
 ```
+
 
 从源码或本地打包文件安装：
 
