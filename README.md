@@ -1,6 +1,6 @@
 # dsh-ima-copilot
 
-腾讯 IMA Copilot 的 DSH 原生工具插件。它把 IMA 知识库问答直接注册为 `ima_ask`，让 Agent 能按问题语义检索、归纳并返回引用资料，补足官方公开知识库skill能力主要依赖标题关键字搜索的限制。
+腾讯 IMA 是一个非常好的知识库应用，但是他们提供的skill版本针对公开知识库的检索方式只提供了基于文件标题的关键字检索，好一阵无语。为了补足在harness的这种知识库检索能力，基于tencent-ima-copilot-mcp迭代了对应的dsh版本。腾讯 IMA Copilot 的 DSH 原生工具插件。它把 IMA 知识库问答直接注册为 `ima_ask`，让 Agent 能按问题语义检索、归纳并返回引用资料，补足官方公开知识库skill能力主要依赖标题关键字搜索的限制。
 
 本项目基于 [highkay/tencent-ima-copilot-mcp](https://github.com/highkay/tencent-ima-copilot-mcp) 的 IMA 接口实现改造为 DSH bundle：无需启动 MCP、FastMCP、Python 服务或常驻子进程，并提供 Web 配置界面。
 
