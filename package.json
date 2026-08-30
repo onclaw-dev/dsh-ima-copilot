@@ -1,0 +1,105 @@
+{
+  "name": "dsh-ima-copilot",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "DSH IMA Copilot 插件：通过 ima_ask 深度问答腾讯 IMA 知识库，含 Web 配置界面",
+  "license": "MIT",
+  "author": "omdsh-dev contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/omdsh-dev/dsh-ima-copilot.git"
+  },
+  "homepage": "https://github.com/omdsh-dev/dsh-ima-copilot#readme",
+  "bugs": {
+    "url": "https://github.com/omdsh-dev/dsh-ima-copilot/issues"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "ima-copilot",
+    "knowledge-base"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE",
+    "img_preview.png"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-ui-settings-plugins"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "build": "tsc --emitDeclarationOnly && tsdown --config tsdown.config.ts",
+    "check": "tsc --noEmit",
+    "link:harness": "node scripts/link-harness.mjs",
+    "prepack": "npm run build",
+    "test": "vitest run",
+    "verify:live": "node scripts/verify-live-ima.mjs",
+    "verify:package": "npm pack --dry-run --cache .npm-cache",
+    "verify": "npm run check && npm run test && npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-client-connection": "0.1.0-rc.5",
+    "@deepseek-ai/dsh-client-runtime": "0.1.0-rc.5",
+    "@deepseek-ai/dsh-client-ui-settings-plugins": "0.1.0-rc.5",
+    "@deepseek-ai/dsh-client-ui-slots": "0.1.0-rc.5",
+    "@deepseek-ai/dsh-credentials": "0.1.0-rc.5",
+    "@deepseek-ai/dsh-tools": "0.1.0-rc.5",
+    "@deepseek-ai/schemastery": "^3.18.1",
+    "react": "^18.2.0"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": { "optional": true },
+    "@deepseek-ai/dsh-client-connection": { "optional": true },
+    "@deepseek-ai/dsh-client-runtime": { "optional": true },
+    "@deepseek-ai/dsh-client-ui-settings-plugins": { "optional": true },
+    "@deepseek-ai/dsh-client-ui-slots": { "optional": true },
+    "@deepseek-ai/dsh-credentials": { "optional": true },
+    "@deepseek-ai/dsh-tools": { "optional": true },
+    "@deepseek-ai/schemastery": { "optional": true },
+    "react": { "optional": true }
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^18.3.0",
+    "react": "^18.2.0",
+    "tsdown": "^0.22.2",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  }
+}
