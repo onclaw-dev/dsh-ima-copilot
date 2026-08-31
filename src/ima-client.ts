@@ -1,5 +1,6 @@
 import { randomBytes, randomUUID } from 'node:crypto'
 import type { ResolvedConfig } from './config.js'
+import { normalizeImaHeaderCredential } from './credential-values.js'
 import { Semaphore } from './semaphore.js'
 import type { ImaAnswer, ImaCredentials, ImaReference } from './types.js'
 
@@ -56,10 +57,11 @@ export class ImaClient {
     credentials: ImaCredentials,
     outerSignal: AbortSignal,
   ): Promise<ImaAnswer> {
+    const normalizedCredentials = normalizeCredentials(credentials)
     const signal = AbortSignal.any([outerSignal, AbortSignal.timeout(this.config.requestTimeoutMs)])
     const release = await this.semaphore.acquire(signal)
     try {
-      const auth = await this.refresh(credentials, signal)
+      const auth = await this.refresh(normalizedCredentials, signal)
       let lastError: unknown
       for (let attempt = 0; attempt <= this.config.retryCount; attempt += 1) {
         try {
@@ -225,6 +227,13 @@ export class ImaClient {
     if (mode === 'sse') headers.set('cache-control', 'no-cache')
     if (token !== undefined) headers.set('authorization', `Bearer ${token}`)
     return headers
+  }
+}
+
+function normalizeCredentials(credentials: ImaCredentials): ImaCredentials {
+  return {
+    xImaCookie: normalizeImaHeaderCredential(credentials.xImaCookie, 'X-Ima-Cookie'),
+    xImaBkn: normalizeImaHeaderCredential(credentials.xImaBkn, 'X-Ima-Bkn'),
   }
 }
 

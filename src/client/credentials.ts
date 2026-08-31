@@ -1,5 +1,8 @@
-import type { ClientRemote } from '@deepseek-ai/dsh-api-remotes/client'
-import { IMA_RUNTIME_REFS } from '../credential-refs.js'
+import type { IApiClient } from '@deepseek-ai/dsh-client-connection/client'
+import {
+  IMA_RUNTIME_REFS, IMA_X_IMA_BKN_REF, IMA_X_IMA_COOKIE_REF,
+} from '../credential-refs.js'
+import { normalizeImaHeaderCredential } from '../credential-values.js'
 
 export { IMA_RUNTIME_REFS }
 
@@ -10,8 +13,8 @@ export interface CredentialState {
   source?: string
 }
 
-/** Credential Remote namespace selected by the Web Client assembly. */
-export type CredentialsRemote = ClientRemote['credentials']
+/** Credential API exposed by the rc.2 browser connection. */
+export type CredentialsRemote = IApiClient['credentials']
 
 /**
  * Describe IMA references without reading secret literals.
@@ -21,11 +24,11 @@ export type CredentialsRemote = ClientRemote['credentials']
 export async function describeImaSettings(
   credentials: Pick<CredentialsRemote, 'describe'>,
 ): Promise<Record<string, CredentialState>> {
-  const response = await credentials.describe([...IMA_RUNTIME_REFS])
-  if (!response.ok) throw new Error(response.error.message)
+  const response = await credentials.describe({ refs: [...IMA_RUNTIME_REFS] })
+  if (!response.result.ok) throw new Error(response.result.error.message)
   const next: Record<string, CredentialState> = {}
   for (const ref of IMA_RUNTIME_REFS) {
-    const view = response.value[ref]
+    const view = response.result.value.credentials[ref]
     next[ref] = {
       configured: view?.configured ?? false,
       writable: view?.writable ?? true,
@@ -45,10 +48,12 @@ export async function saveImaSettings(
   values: Readonly<Record<string, string>>,
 ): Promise<void> {
   for (const ref of IMA_RUNTIME_REFS) {
-    const value = values[ref]?.trim()
+    let value = values[ref]?.trim()
     if (value !== undefined && value.length > 0) {
-      const response = await credentials.set(ref, value)
-      if (!response.ok) throw new Error(response.error.message)
+      if (ref === IMA_X_IMA_COOKIE_REF) value = normalizeImaHeaderCredential(value, 'X-Ima-Cookie')
+      if (ref === IMA_X_IMA_BKN_REF) value = normalizeImaHeaderCredential(value, 'X-Ima-Bkn')
+      const response = await credentials.set({ ref, value })
+      if (!response.result.ok) throw new Error(response.result.error.message)
     }
   }
 }

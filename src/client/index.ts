@@ -1,21 +1,22 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-api-remotes/client'
+import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings-plugins/client'
 import { ImaSettingsCard, type ImaSettingsCardFace } from './ImaSettingsCard.js'
 
 /** Browser services required by the IMA settings contribution. */
-export const inject = ['slots', 'remote', 'remote.credentials']
+export const inject = ['slots', 'connection']
 
 /**
  * Add the IMA authentication card to Settings > Plugins > Configurable.
  * @param ctx - Harness browser context.
  */
 export function apply(ctx: ClientContext): void {
+  const { api } = ctx.get('connection') as ConnectionHandle
   ctx.slots.inject('settings.plugin.item', () => ctx.slots.register({
     name: 'settings.plugin.item',
     key: 'ima-copilot',
-    inject: (): ImaSettingsCardFace => ({ credentials: ctx.remote.credentials }),
+    inject: (): ImaSettingsCardFace => ({ credentials: api.credentials }),
   }, ImaSettingsCard))
 }
 

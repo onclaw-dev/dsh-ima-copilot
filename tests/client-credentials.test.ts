@@ -8,12 +8,17 @@ import {
 describe('IMA settings credential Remote adapter', () => {
   it('maps safe credential status and supplies defaults for missing references', async () => {
     const describeRemote = vi.fn().mockResolvedValue({
-      ok: true,
-      value: {
-        [IMA_RUNTIME_REFS[0]]: {
-          configured: true,
-          writable: false,
-          source: 'profile',
+      rpcId: 'describe-ima',
+      result: {
+        ok: true,
+        value: {
+          credentials: {
+            [IMA_RUNTIME_REFS[0]]: {
+              configured: true,
+              writable: false,
+              source: 'profile',
+            },
+          },
         },
       },
     })
@@ -22,7 +27,7 @@ describe('IMA settings credential Remote adapter', () => {
       describe: describeRemote,
     } as unknown as Parameters<typeof describeImaSettings>[0])
 
-    expect(describeRemote).toHaveBeenCalledWith([...IMA_RUNTIME_REFS])
+    expect(describeRemote).toHaveBeenCalledWith({ refs: [...IMA_RUNTIME_REFS] })
     expect(result[IMA_RUNTIME_REFS[0]]).toEqual({
       configured: true,
       writable: false,
@@ -35,7 +40,10 @@ describe('IMA settings credential Remote adapter', () => {
   })
 
   it('trims and writes only non-empty staged values', async () => {
-    const setRemote = vi.fn().mockResolvedValue({ ok: true, value: undefined })
+    const setRemote = vi.fn().mockResolvedValue({
+      rpcId: 'set-ima',
+      result: { ok: true, value: {} },
+    })
 
     await saveImaSettings({
       set: setRemote,
@@ -46,15 +54,50 @@ describe('IMA settings credential Remote adapter', () => {
     })
 
     expect(setRemote.mock.calls).toEqual([
-      [IMA_RUNTIME_REFS[0], 'cookie=value'],
-      [IMA_RUNTIME_REFS[2], 'base-one,base-two'],
+      [{ ref: IMA_RUNTIME_REFS[0], value: 'cookie=value' }],
+      [{ ref: IMA_RUNTIME_REFS[2], value: 'base-one,base-two' }],
     ])
+  })
+
+  it('removes BOM artifacts before saving header credentials', async () => {
+    const setRemote = vi.fn().mockResolvedValue({
+      rpcId: 'set-ima',
+      result: { ok: true, value: {} },
+    })
+
+    await saveImaSettings({
+      set: setRemote,
+    } as unknown as Parameters<typeof saveImaSettings>[0], {
+      [IMA_RUNTIME_REFS[0]]: 'IMA-UID=user; copied=value\uFEFF; IMA-REFRESH-TOKEN=token',
+      [IMA_RUNTIME_REFS[1]]: '\uFEFF123456\uFEFF',
+    })
+
+    expect(setRemote.mock.calls).toEqual([
+      [{ ref: IMA_RUNTIME_REFS[0], value: 'IMA-UID=user; copied=value; IMA-REFRESH-TOKEN=token' }],
+      [{ ref: IMA_RUNTIME_REFS[1], value: '123456' }],
+    ])
+  })
+
+  it('rejects a visibly truncated credential before saving it', async () => {
+    const setRemote = vi.fn()
+
+    await expect(saveImaSettings({
+      set: setRemote,
+    } as unknown as Parameters<typeof saveImaSettings>[0], {
+      [IMA_RUNTIME_REFS[0]]: 'IMA-UID=user; omitted=…; IMA-REFRESH-TOKEN=token',
+    })).rejects.toThrow(
+      'X-Ima-Cookie contains unsupported HTTP header character U+2026',
+    )
+    expect(setRemote).not.toHaveBeenCalled()
   })
 
   it('surfaces Remote failures without attempting later writes', async () => {
     const setRemote = vi.fn().mockResolvedValue({
-      ok: false,
-      error: { message: 'write denied' },
+      rpcId: 'set-ima',
+      result: {
+        ok: false,
+        error: { message: 'write denied' },
+      },
     })
 
     await expect(saveImaSettings({

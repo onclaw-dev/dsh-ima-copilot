@@ -18,25 +18,33 @@
 ## 环境要求
 
 - Node.js `^22.19.0` 或 `>=24.0.0`
-- DSH `0.1.2-alpha.2`
+- DSH `0.1.1-rc.2`
 - Web profile 需要 `@deepseek-ai/dsh-client-ui-settings-plugins`
 
 本版本对应 DeepSeek Harness Release
-[`dsh-v0.1.2-alpha.2`](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.1.2-alpha.2) 和提交
-[`0a53fb55bea101816fa226bb964ae2bed71c343b`](https://github.com/deepseek-ai/deepseek-harness/commit/0a53fb55bea101816fa226bb964ae2bed71c343b)。`package.json` 中的 `deepseekHarness` 记录了这一源码基线；本地链接脚本会同时校验提交和版本，避免误用其他破坏性迭代节点。
+[`dsh-v0.1.1-rc.2`](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.1.1-rc.2) 和提交
+[`b150a551b8d465e31e418e1b2eaf5e79bbb7d28e`](https://github.com/deepseek-ai/deepseek-harness/commit/b150a551b8d465e31e418e1b2eaf5e79bbb7d28e)。`package.json` 中的 `deepseekHarness` 记录了这一源码基线；本地链接脚本会同时校验提交和版本，避免误用其他破坏性迭代节点。
+
+当前插件版本为 `0.1.1-rc.2.ima.1`，npm `latest` 和 `rc` 通道对应这一经过验证的 Harness rc.2 基线。`alpha` 通道继续保留 `0.1.2-alpha.2.ima.1`，仅用于跟随 Harness alpha 测试线。
 
 > 本插件调用的是 IMA Web API，而非公开稳定 API；上游接口变化可能导致插件需要同步适配。
 
 ## 安装
 
-使用npm进行安装
+安装当前默认版本（Harness `0.1.1-rc.2` 基线）：
 
 ```powershell
-dsh plugin --profile web add dsh-ima-copilot@alpha
+dsh plugin --profile web add dsh-ima-copilot
 dsh web
 ```
 
-使用github地址进行安装
+如需显式安装 Harness alpha 测试线对应的历史版本：
+
+```powershell
+dsh plugin --profile web add dsh-ima-copilot@alpha
+```
+
+使用 GitHub 地址进行安装：
 
 ```powershell
 dsh plugin --profile web add https://github.com/onclaw-dev/dsh-ima-copilot.git
@@ -51,7 +59,7 @@ npm ci
 npm run link:harness -- <本地 DSH 仓库路径>
 npm run verify
 npm pack
-dsh plugin --profile web add .\dsh-ima-copilot-0.1.2-alpha.2.ima.1.tgz
+dsh plugin --profile web add .\dsh-ima-copilot-0.1.1-rc.2.ima.1.tgz
 dsh web
 ```
 
@@ -78,7 +86,7 @@ dsh --profile web --dump-config
 1. 登录 [IMA Copilot](https://ima.qq.com)。
 2. 打开浏览器开发者工具的 Network（网络）面板。
 3. 在 IMA 中发送一条消息，找到 `/cgi-bin/assistant/qa` 请求。
-4. 从同一个请求复制 `x-ima-cookie` 和 `x-ima-bkn`，并在设置页同时更新。
+4. 从同一个请求的原始 Request Headers 中复制完整的 `x-ima-cookie` 和 `x-ima-bkn`，并在设置页同时更新；不要复制包含 `…` 的截断摘要值。
 5. 在目标知识库页面找到 `init_session` 请求，从请求体读取 `knowledge_base_id`。
 
 设置页只读取 `configured`、`source` 和 `writable` 状态，不读取或回显已保存的值。保存新的知识库 ID 时，请输入完整列表；新列表会替换旧列表。
@@ -131,7 +139,7 @@ npm run build
 npm run verify:package
 ```
 
-当前 `0.1.2-alpha.2` 的 DSH 开发包可由上述精确提交的本地 DSH 源码提供。链接脚本不会把 monorepo 根目录冒充某个 workspace 包；它会校验提交后，分别链接插件实际使用的包。链接完成后也可以用一条命令执行类型检查、测试和构建：
+当前 `0.1.1-rc.2` 的 DSH 开发包可由上述精确提交的本地 DSH 源码提供。链接脚本不会把 monorepo 根目录冒充某个 workspace 包；它会校验提交后，分别链接插件实际使用的包。链接完成后也可以用一条命令执行类型检查、测试和构建：
 
 ```powershell
 npm run verify

@@ -1,4 +1,4 @@
-import type { ClientRemote } from '@deepseek-ai/dsh-api-remotes/client';
+import type { IApiClient } from '@deepseek-ai/dsh-client-connection/client';
 import { IMA_RUNTIME_REFS } from '../credential-refs.js';
 export { IMA_RUNTIME_REFS };
 /** Browser-safe status for one write-only credential. */
@@ -7,8 +7,8 @@ export interface CredentialState {
     writable: boolean;
     source?: string;
 }
-/** Credential Remote namespace selected by the Web Client assembly. */
-export type CredentialsRemote = ClientRemote['credentials'];
+/** Credential API exposed by the rc.2 browser connection. */
+export type CredentialsRemote = IApiClient['credentials'];
 /**
  * Describe IMA references without reading secret literals.
  * @param credentials - Harness credential wire API.

@@ -37,6 +37,7 @@ const links = {
   'dsh-credentials': 'packages/credentials/credentials',
   'dsh-settings': 'packages/settings/settings',
   'dsh-api-remotes': 'packages/api/remotes',
+  'dsh-client-connection': 'packages/client/connection',
   'dsh-client-ui-renderer': 'packages/client/ui-renderer',
   'dsh-client-ui-slots': 'packages/client/ui-slots',
   'dsh-client-ui-settings-plugins': 'packages/client/ui-settings-plugins',

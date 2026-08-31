@@ -1,7 +1,7 @@
 /** Native DeepSeek Harness Host plugin for Tencent IMA Copilot. */
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-credentials'
-import type {} from '@deepseek-ai/dsh-settings'
+import { settingsNamespace, type SettingsScope } from '@deepseek-ai/dsh-settings'
 import type {} from '@deepseek-ai/dsh-tools'
 import { Config, resolveConfig, type Config as ImaPluginConfig } from './config.js'
 import { ImaClient } from './ima-client.js'
@@ -35,7 +35,8 @@ export const IMA_SETTINGS_NAMESPACE = 'ima-copilot'
  * @param config - validated bundle configuration.
  */
 export function apply(ctx: Context, config: ImaPluginConfig): void {
-  let source: () => ImaPluginConfig = () => config
+  let settingsScope: SettingsScope<ImaPluginConfig> | undefined
+  const source = (): ImaPluginConfig => settingsScope?.get() ?? config
   let disposeTool: () => void = () => {}
   const registerTool = (): void => {
     disposeTool()
@@ -49,10 +50,20 @@ export function apply(ctx: Context, config: ImaPluginConfig): void {
   }, 'ima-copilot: native tool registration')
 
   ctx.inject(['settings'], (settingsCtx) => {
-    settingsCtx.settings.installSection(ctx, IMA_SETTINGS_NAMESPACE, Config, config, {
-      setSource: (current) => { source = current },
-      onChange: registerTool,
-      validate: resolveConfig,
-    })
+    const scope = settingsCtx.settings.register(
+      settingsNamespace(IMA_SETTINGS_NAMESPACE),
+      Config,
+      {
+        base: config,
+        validate: (value) => { resolveConfig(value) },
+      },
+    )
+    settingsScope = scope
+    registerTool()
+    const unwatch = scope.watch(() => { registerTool() })
+    settingsCtx.effect(() => () => {
+      unwatch()
+      if (settingsScope === scope) settingsScope = undefined
+    }, 'ima-copilot: settings section')
   })
 }
