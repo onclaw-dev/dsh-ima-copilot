@@ -1,6 +1,6 @@
 /** Native DeepSeek Harness Host plugin for Tencent IMA Copilot. */
-import type { Context } from '@deepseek-ai/cordis';
 import { Config, resolveConfig, type Config as ImaPluginConfig } from './config.js';
+import type { ImaHostContext } from './dsh-contract.js';
 export { Config, resolveConfig };
 export type { ImaPluginConfig };
 export { ImaClient, ImaError } from './ima-client.js';
@@ -19,5 +19,5 @@ export declare const IMA_SETTINGS_NAMESPACE = "ima-copilot";
  * @param ctx - Harness Host context.
  * @param config - validated bundle configuration.
  */
-export declare function apply(ctx: Context, config: ImaPluginConfig): void;
+export declare function apply(ctx: ImaHostContext, config: ImaPluginConfig): void;
 //# sourceMappingURL=index.d.ts.map

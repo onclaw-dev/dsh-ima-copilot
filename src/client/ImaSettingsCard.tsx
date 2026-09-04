@@ -1,29 +1,19 @@
 import { useCallback, useEffect, useState, type CSSProperties } from 'react'
-import type { InjectFace, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
-import type {} from '@deepseek-ai/dsh-client-ui-settings-plugins/client'
 import {
-  IMA_RUNTIME_REFS, describeImaSettings, saveImaSettings, type CredentialState, type CredentialsRemote,
+  IMA_RUNTIME_REFS, describeImaSettings, saveImaSettings, type CredentialState,
 } from './credentials.js'
 import { IMA_CREDENTIAL_REFS, IMA_KNOWLEDGE_BASE_IDS_REF } from '../credential-refs.js'
 
-/** Injected browser operations for the IMA settings card. */
-export interface ImaSettingsCardFace {
-  credentials: CredentialsRemote
-}
-
-type ImaSettingsCardProps = PropsRuntime<'settings.plugin.item'> & InjectFace<ImaSettingsCardFace>
-
 /** Harness settings card for dynamic IMA authentication and knowledge-base state. */
-export function ImaSettingsCard(props: ImaSettingsCardProps) {
-  const [open, setOpen] = useState(false)
+export function ImaSettingsCard() {
   const [values, setValues] = useState<Record<string, string>>({})
   const [state, setState] = useState<Record<string, CredentialState>>({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string>()
 
   const refresh = useCallback(async () => {
-    setState(await describeImaSettings(props.credentials))
-  }, [props.credentials])
+    setState(await describeImaSettings())
+  }, [])
 
   useEffect(() => {
     void refresh().catch(cause => setError(cause instanceof Error ? cause.message : String(cause)))
@@ -33,7 +23,7 @@ export function ImaSettingsCard(props: ImaSettingsCardProps) {
     setSaving(true)
     setError(undefined)
     try {
-      await saveImaSettings(props.credentials, values)
+      await saveImaSettings(values)
       setValues({})
       await refresh()
     } catch (cause) {
@@ -45,18 +35,10 @@ export function ImaSettingsCard(props: ImaSettingsCardProps) {
 
   const stored = IMA_RUNTIME_REFS.every(ref => state[ref]?.configured === true)
   const dirty = IMA_RUNTIME_REFS.some(ref => (values[ref]?.trim().length ?? 0) > 0)
-  const bodyId = 'ima-copilot-settings-body'
 
   return (
-    <li style={styles.card} data-testid="ima-settings-card">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls={bodyId}
-        aria-label={`${open ? '收起' : '展开'} IMA Copilot 配置`}
-        onClick={() => setOpen(current => !current)}
-        style={styles.header}
-      >
+    <div style={styles.card} data-testid="ima-settings-card">
+      <div style={styles.header}>
         <span style={styles.heading}>
           <span style={styles.titleRow}>
             <strong style={styles.title}>IMA Copilot</strong>
@@ -64,84 +46,67 @@ export function ImaSettingsCard(props: ImaSettingsCardProps) {
           </span>
           <span style={styles.summary}>配置 IMA 认证与知识库。</span>
         </span>
-        <Chevron open={open} />
-      </button>
+      </div>
 
-      {open ? (
-        <div id={bodyId} style={styles.body}>
-          <p style={styles.description}>
-            更新从 ima.qq.com 获取的认证信息和知识库 ID。ima_ask 会在每次调用前读取最新配置，
-            无需重启。
-          </p>
-          <p style={stored ? styles.ready : styles.warning}>
-            {stored
-              ? '配置已保存，将在下次调用时验证认证有效性'
-              : '配置不完整，请填写全部三个字段'}
-          </p>
-          {IMA_CREDENTIAL_REFS.map(ref => (
-            <label key={ref} style={styles.field}>
-              <span style={styles.label}>{ref === 'IMA_X_IMA_COOKIE' ? 'X-Ima-Cookie' : 'X-Ima-Bkn'}</span>
-              <input
-                type="password"
-                autoComplete="off"
-                value={values[ref] ?? ''}
-                placeholder={state[ref]?.configured ? '已配置，输入新值可替换' : '尚未配置'}
-                disabled={state[ref]?.writable === false || saving}
-                onChange={event => setValues(current => ({ ...current, [ref]: event.target.value }))}
-                style={styles.input}
-              />
-              <FieldState state={state[ref]} />
-            </label>
-          ))}
-          <label style={styles.field}>
-            <span style={styles.label}>知识库 ID</span>
-            <textarea
-              rows={4}
-              value={values[IMA_KNOWLEDGE_BASE_IDS_REF] ?? ''}
-              placeholder={state[IMA_KNOWLEDGE_BASE_IDS_REF]?.configured
-                ? '已配置，输入完整列表可替换'
-                : '每行一个 ID，或使用逗号分隔'}
-              disabled={state[IMA_KNOWLEDGE_BASE_IDS_REF]?.writable === false || saving}
-              onChange={event => setValues(current => ({
-                ...current, [IMA_KNOWLEDGE_BASE_IDS_REF]: event.target.value,
-              }))}
-              style={{ ...styles.input, ...styles.textarea }}
+      <div style={styles.body}>
+        <p style={styles.description}>
+          更新从 ima.qq.com 获取的认证信息和知识库 ID。ima_ask 会在每次调用前读取最新配置，
+          无需重启。
+        </p>
+        <p style={stored ? styles.ready : styles.warning}>
+          {stored
+            ? '配置已保存，将在下次调用时验证认证有效性'
+            : '配置不完整，请填写全部三个字段'}
+        </p>
+        {IMA_CREDENTIAL_REFS.map(ref => (
+          <label key={ref} style={styles.field}>
+            <span style={styles.label}>{ref === 'IMA_X_IMA_COOKIE' ? 'X-Ima-Cookie' : 'X-Ima-Bkn'}</span>
+            <input
+              type="password"
+              autoComplete="off"
+              value={values[ref] ?? ''}
+              placeholder={state[ref]?.configured ? '已配置，输入新值可替换' : '尚未配置'}
+              disabled={state[ref]?.writable === false || saving}
+              onChange={event => setValues(current => ({ ...current, [ref]: event.target.value }))}
+              style={styles.input}
             />
-            <small style={styles.hint}>保存时会替换完整知识库列表，已保存内容不会回显。</small>
-            <FieldState state={state[IMA_KNOWLEDGE_BASE_IDS_REF]} />
+            <FieldState state={state[ref]} />
           </label>
-          {error === undefined ? null : <p role="alert" style={styles.error}>{error}</p>}
-          <div style={styles.footer}>
-            <button
-              type="button"
-              disabled={saving || !dirty}
-              onClick={() => { void save() }}
-              style={styles.saveButton}
-            >
-              {saving ? '保存中…' : '保存更新'}
-            </button>
-          </div>
-          <small style={styles.hint}>
-            如果 IMA 返回 code 41，请从同一个当前浏览器请求中重新获取 X-Ima-Cookie 和
-            X-Ima-Bkn，并同时替换。
-          </small>
+        ))}
+        <label style={styles.field}>
+          <span style={styles.label}>知识库 ID</span>
+          <textarea
+            rows={4}
+            value={values[IMA_KNOWLEDGE_BASE_IDS_REF] ?? ''}
+            placeholder={state[IMA_KNOWLEDGE_BASE_IDS_REF]?.configured
+              ? '已配置，输入完整列表可替换'
+              : '每行一个 ID，或使用逗号分隔'}
+            disabled={state[IMA_KNOWLEDGE_BASE_IDS_REF]?.writable === false || saving}
+            onChange={event => setValues(current => ({
+              ...current, [IMA_KNOWLEDGE_BASE_IDS_REF]: event.target.value,
+            }))}
+            style={{ ...styles.input, ...styles.textarea }}
+          />
+          <small style={styles.hint}>保存时会替换完整知识库列表，已保存内容不会回显。</small>
+          <FieldState state={state[IMA_KNOWLEDGE_BASE_IDS_REF]} />
+        </label>
+        {error === undefined ? null : <p role="alert" style={styles.error}>{error}</p>}
+        <div style={styles.footer}>
+          <button
+            type="button"
+            disabled={saving || !dirty}
+            onClick={() => { void save() }}
+            style={styles.saveButton}
+          >
+            {saving ? '保存中…' : '保存更新'}
+          </button>
         </div>
-      ) : null}
-    </li>
-  )
-}
-
-function Chevron({ open }: { open: boolean }) {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 16 16"
-      width="16"
-      height="16"
-      style={{ ...styles.chevron, transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
-    >
-      <path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+        <small style={styles.hint}>
+          如果 IMA 返回 code 41，请从同一个当前浏览器请求中重新获取 X-Ima-Cookie 和
+          X-Ima-Bkn，并同时替换。
+        </small>
+      </div>
+    </div>
   )
 }
 
@@ -164,13 +129,13 @@ function FieldState({ state }: { state: CredentialState | undefined }) {
 
 const styles: Record<string, CSSProperties> = {
   card: {
-    listStyle: 'none', border: '1px solid var(--dsh-border-color, #d7d7d7)', borderRadius: 12,
+    border: '1px solid var(--dsh-border-color, #d7d7d7)', borderRadius: 12,
     overflow: 'hidden', background: 'var(--dsh-card-background, transparent)',
   },
   header: {
     width: '100%', border: 0, padding: 16, display: 'flex', alignItems: 'center',
     justifyContent: 'space-between', gap: 16, background: 'transparent', color: 'inherit',
-    textAlign: 'left', cursor: 'pointer', font: 'inherit',
+    textAlign: 'left', font: 'inherit',
   },
   heading: { minWidth: 0, display: 'grid', gap: 7 },
   titleRow: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
@@ -180,7 +145,6 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 999, padding: '2px 8px', fontSize: 12, fontWeight: 500,
     color: '#9a5b00', background: 'rgba(196, 122, 0, 0.12)',
   },
-  chevron: { flex: '0 0 auto', opacity: 0.6, transition: 'transform 160ms ease' },
   body: {
     borderTop: '1px solid var(--dsh-border-color, #e2e2e2)', padding: '16px',
     display: 'grid', gap: 16,

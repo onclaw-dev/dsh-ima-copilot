@@ -2,7 +2,6 @@
 - insert:
     - id: ima-copilot
       name: dsh-ima-copilot
-      inject: [tools, credentials]
       config:
         requestTimeoutMs: 300000
         retryCount: 3
