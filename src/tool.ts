@@ -1,7 +1,9 @@
+import type { Context } from '@deepseek-ai/cordis'
+import { credentialRef } from '@deepseek-ai/dsh-credentials'
+import { defineTool, type ToolDefinition } from '@deepseek-ai/dsh-tools'
 import type { ResolvedConfig } from './config.js'
-import type { CredentialsService, ImaHostContext } from './dsh-contract.js'
 import { ImaClient } from './ima-client.js'
-import type { ImaAnswer, ImaCredentials } from './types.js'
+import type { ImaCredentials } from './types.js'
 import {
   IMA_KNOWLEDGE_BASE_IDS_REF, IMA_RUNTIME_REFS, IMA_X_IMA_BKN_REF, IMA_X_IMA_COOKIE_REF,
 } from './credential-refs.js'
@@ -16,8 +18,8 @@ export const IMA_TOOL_NAME = 'ima_ask'
  * @param client - IMA transport client.
  * @returns registry-ready native tool definition.
  */
-export function createImaTool(ctx: ImaHostContext, config: ResolvedConfig, client: ImaClient) {
-  return ctx.dshLoader.dsh.tools.defineTool({
+export function createImaTool(ctx: Context, config: ResolvedConfig, client: ImaClient): ToolDefinition {
+  return defineTool({
     name: IMA_TOOL_NAME,
     description: 'Ask Tencent IMA Copilot a question using one configured knowledge base.',
     parameters: {
@@ -55,13 +57,13 @@ export function createImaTool(ctx: ImaHostContext, config: ResolvedConfig, clien
           },
         },
       },
-      render: (_args: unknown, value: ImaAnswer) => [{
+      render: (_args, value) => [{
         type: 'text',
         text: renderAnswer(value.answer, value.references),
       }],
     },
     timeoutMs: config.requestTimeoutMs,
-    async execute(args: { question: string; knowledgeBaseId?: string }, exec: { signal: AbortSignal }) {
+    async execute(args, exec) {
       const question = args.question.trim()
       if (question.length === 0) throw new Error('ima_ask: question must be non-empty')
       const runtime = await resolveRuntimeState(ctx)
@@ -82,14 +84,11 @@ export interface ImaRuntimeState {
  * @param ctx - Harness credential provider context.
  * @returns operation-local authentication and knowledge-base allowlist.
  */
-export async function resolveRuntimeState(ctx: ImaHostContext): Promise<ImaRuntimeState> {
-  const credentials = ctx.dshLoader.services.get<CredentialsService>('credentials')
-  if (credentials === undefined) throw new Error('ima_ask: credential service is unavailable')
-  const credentialRef = ctx.dshLoader.dsh.credentials.credentialRef
+export async function resolveRuntimeState(ctx: Context): Promise<ImaRuntimeState> {
   const [cookie, bkn, knowledgeBaseIdsValue] = await Promise.all([
-    credentials.resolve(credentialRef(IMA_X_IMA_COOKIE_REF)),
-    credentials.resolve(credentialRef(IMA_X_IMA_BKN_REF)),
-    credentials.resolve(credentialRef(IMA_KNOWLEDGE_BASE_IDS_REF)),
+    ctx.credentials.resolve(credentialRef(IMA_X_IMA_COOKIE_REF)),
+    ctx.credentials.resolve(credentialRef(IMA_X_IMA_BKN_REF)),
+    ctx.credentials.resolve(credentialRef(IMA_KNOWLEDGE_BASE_IDS_REF)),
   ])
   const resolved = [cookie, bkn, knowledgeBaseIdsValue]
   const missing = IMA_RUNTIME_REFS.filter((_, index) => resolved[index]?.value.trim().length === 0 || resolved[index] === undefined)

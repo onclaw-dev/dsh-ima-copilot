@@ -13,7 +13,7 @@ const client: UserConfig = {
   sourcemap: true,
   clean: false,
   deps: {
-    neverBundle: [/^@dsh-plugin\/dsh-loader(?:\/|$)/, /^react(?:\/|$)/],
+    neverBundle: [/^@deepseek-ai\//, /^react(?:\/|$)/],
   },
   outputOptions: {
     entryFileNames: 'client.js',

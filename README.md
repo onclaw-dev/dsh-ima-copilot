@@ -10,45 +10,38 @@
 
 - 注册原生工具 `ima_ask`，支持单知识库自动选择与多知识库显式选择。
 - 返回回答正文及资料 ID、标题、知识库名称等引用信息。
-- 在独立的“设置 → IMA Copilot”页面维护认证信息和知识库 ID。
+- 在“设置 → 插件 → IMA Copilot”中维护认证信息和知识库 ID。
 - 每次调用前读取最新配置；修改配置后无需重启 DSH。
 - 内置超时、并发限制、瞬时失败重试与取消处理。
-- 凭证明文仅由 Host 侧 Credentials 服务读写，不回显到 Web 页面。
+- 凭证明文仅通过 DSH Credentials API 读写，不回显到 Web 页面。
 
 ## 环境要求
 
 - Node.js `^22.19.0` 或 `>=24.0.0`
-- `@dsh-plugin/dsh-loader` `>=1.3.4 <2`
-- dsh-loader 当前适配范围内、带 Web profile 的 DSH
+- DSH `0.1.1-rc.2`
+- Web profile 需要 `@deepseek-ai/dsh-client-ui-settings-plugins`
 
-本项目从 `0.2.0` 起只面向 dsh-loader 的稳定契约开发。Harness 的内部服务名、模块路径和版本差异由 loader adapter 负责，本插件不再安装、锁定或在 Client 清单中引用 Harness workspace 包。Host 能力通过 `ctx.dshLoader` 获取，Client UI 组合使用 loader 的 `ui-settings`、`ui-slots` 稳定子路径；`package.json.dshLoader` 记录采用的契约代际与最低 loader 版本。
+本版本对应 DeepSeek Harness Release
+[`dsh-v0.1.1-rc.2`](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.1.1-rc.2) 和提交
+[`b150a551b8d465e31e418e1b2eaf5e79bbb7d28e`](https://github.com/deepseek-ai/deepseek-harness/commit/b150a551b8d465e31e418e1b2eaf5e79bbb7d28e)。`package.json` 中的 `deepseekHarness` 记录了这一源码基线；本地链接脚本会同时校验提交和版本，避免误用其他破坏性迭代节点。
 
-插件使用独立 SemVer；当前版本为 `0.2.1`。旧的 `rc` 和 `alpha` 版本仅作为历史 Harness 直连版本保留。
+当前插件版本为 `0.1.1-rc.2.ima.1`，npm `latest` 和 `rc` 通道对应这一经过验证的 Harness rc.2 基线。`alpha` 通道继续保留 `0.1.2-alpha.2.ima.1`，仅用于跟随 Harness alpha 测试线。
 
 > 本插件调用的是 IMA Web API，而非公开稳定 API；上游接口变化可能导致插件需要同步适配。
 
 ## 安装
 
-本插件不会自动安装 dsh-loader。必须先手动安装
-[`dsh-plugins/dsh-loader`](https://github.com/dsh-plugins/dsh-loader)，并将其挂载到同一个 Web profile，然后再安装本插件。
-
-使用 npm 包安装 loader（推荐）：
-
-```powershell
-dsh plugin --profile web add @dsh-plugin/dsh-loader
-```
-
-也可以直接从 GitHub 仓库安装 loader：
-
-```powershell
-dsh plugin --profile web add https://github.com/dsh-plugins/dsh-loader.git
-```
-
-安装 loader 后再安装并启动本插件：
+安装当前默认版本（Harness `0.1.1-rc.2` 基线）：
 
 ```powershell
 dsh plugin --profile web add dsh-ima-copilot
 dsh web
+```
+
+如需显式安装 Harness alpha 测试线对应的历史版本：
+
+```powershell
+dsh plugin --profile web add dsh-ima-copilot@alpha
 ```
 
 使用 GitHub 地址进行安装：
@@ -63,9 +56,10 @@ dsh web
 
 ```powershell
 npm ci
+npm run link:harness -- <本地 DSH 仓库路径>
 npm run verify
 npm pack
-dsh plugin --profile web add .\dsh-ima-copilot-0.2.1.tgz
+dsh plugin --profile web add .\dsh-ima-copilot-0.1.1-rc.2.ima.1.tgz
 dsh web
 ```
 
@@ -79,7 +73,7 @@ dsh --profile web --dump-config
 
 ## 配置
 
-打开独立的“设置 → IMA Copilot”页面，填写以下三项：
+打开“设置 → 插件 → IMA Copilot”，填写以下三项：
 
 | 字段 | DSH 凭证引用 | 说明 |
 | --- | --- | --- |
@@ -95,7 +89,7 @@ dsh --profile web --dump-config
 4. 从同一个请求的原始 Request Headers 中复制完整的 `x-ima-cookie` 和 `x-ima-bkn`，并在设置页同时更新；不要复制包含 `…` 的截断摘要值。
 5. 在目标知识库页面找到 `init_session` 请求，从请求体读取 `knowledge_base_id`。
 
-设置页通过插件自己的同源受限接口读写三个固定凭证引用。接口只返回 `configured`、`source` 和 `writable` 状态，不接受任意凭证名，也不读取或回显已保存的值。保存新的知识库 ID 时，请输入完整列表；新列表会替换旧列表。
+设置页只读取 `configured`、`source` 和 `writable` 状态，不读取或回显已保存的值。保存新的知识库 ID 时，请输入完整列表；新列表会替换旧列表。
 
 ## 工具说明
 
@@ -138,14 +132,14 @@ dsh --profile web --dump-config
 
 ```powershell
 npm ci
+npm run link:harness -- <本地 DSH 仓库路径>
 npm run check
-npm run check:loader-boundary
 npm test
 npm run build
 npm run verify:package
 ```
 
-也可以用一条命令执行类型检查、测试和构建：
+当前 `0.1.1-rc.2` 的 DSH 开发包可由上述精确提交的本地 DSH 源码提供。链接脚本不会把 monorepo 根目录冒充某个 workspace 包；它会校验提交后，分别链接插件实际使用的包。链接完成后也可以用一条命令执行类型检查、测试和构建：
 
 ```powershell
 npm run verify

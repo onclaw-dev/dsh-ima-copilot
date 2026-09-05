@@ -1,18 +1,19 @@
 {
   "name": "dsh-ima-copilot",
-  "version": "0.2.1",
+  "version": "0.1.1-rc.2.ima.1",
   "type": "module",
-  "description": "通过登陆网页版ima，基于其认证信息，把知识库问答直接注册为 `ima_ask`，让 Agent 能按问题语义检索、归纳并返回引用资料，解除官方公开知识库skill能力主要依赖标题关键字搜索的限制。使用前需手动安装 @dsh-plugin/dsh-loader。",
+  "description": "DSH IMA Copilot 插件：通过 ima_ask 深度问答腾讯 IMA 知识库，含 Web 配置界面",
   "license": "MIT",
   "author": "omdsh-dev contributors",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/onclaw-dev/dsh-ima-copilot.git"
   },
-  "dshLoader": {
-    "package": "@dsh-plugin/dsh-loader",
-    "contract": 1,
-    "minimumVersion": "1.3.4"
+  "deepseekHarness": {
+    "repository": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "release": "dsh-v0.1.1-rc.2",
+    "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+    "version": "0.1.1-rc.2"
   },
   "homepage": "https://github.com/onclaw-dev/dsh-ima-copilot#readme",
   "bugs": {
@@ -54,18 +55,17 @@
     },
     "client": {
       "inject": [
-        "@dsh-plugin/dsh-loader",
-        "@dsh-plugin/dsh-loader/ui-settings",
-        "@dsh-plugin/dsh-loader/ui-slots"
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-ui-settings-plugins"
       ],
       "platform": "web"
     }
   },
   "scripts": {
     "build": "tsc --emitDeclarationOnly && tsdown --config tsdown.config.ts",
-    "check": "tsc --noEmit && npm run check:loader-boundary",
-    "check:loader-boundary": "node scripts/check-loader-boundary.mjs",
-    "prepack": "npm run check:loader-boundary && npm run build",
+    "check": "tsc --noEmit",
+    "link:harness": "node scripts/link-harness.mjs",
+    "prepack": "npm run build",
     "test": "vitest run",
     "verify:live": "node scripts/verify-live-ima.mjs",
     "verify:package": "npm pack --dry-run --cache .npm-cache",
@@ -73,32 +73,53 @@
   },
   "publishConfig": {
     "access": "public",
-    "tag": "latest"
+    "tag": "rc"
   },
   "engines": {
     "node": "^22.19.0 || >=24.0.0"
   },
-  "dependencies": {
-    "@dsh-plugin/dsh-loader": "^1.3.4",
-    "schemastery": "^3.18.0"
-  },
   "peerDependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "@deepseek-ai/cordis": "^4.0.2",
+    "@deepseek-ai/dsh-credentials": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-settings": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-tools": "0.1.1-rc.2",
+    "@deepseek-ai/schemastery": "^3.18.2",
+    "react": "^18.2.0"
   },
   "peerDependenciesMeta": {
-    "react": {
+    "@deepseek-ai/cordis": {
       "optional": true
     },
-    "react-dom": {
+    "@deepseek-ai/dsh-credentials": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-settings": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-tools": {
+      "optional": true
+    },
+    "@deepseek-ai/schemastery": {
+      "optional": true
+    },
+    "react": {
       "optional": true
     }
   },
   "devDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2",
+    "@deepseek-ai/dsh-api-remotes": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-client-connection": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-renderer": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-settings-plugins": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-slots": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-credentials": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-settings": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-tools": "0.1.1-rc.2",
+    "@deepseek-ai/schemastery": "^3.18.2",
     "@types/node": "^24.0.0",
     "@types/react": "^18.3.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "tsdown": "^0.22.14",
     "typescript": "^6.0.3",
     "vitest": "^4.1.8"

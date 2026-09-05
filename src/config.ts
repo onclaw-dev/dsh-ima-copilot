@@ -1,4 +1,4 @@
-import z from 'schemastery'
+import z from '@deepseek-ai/schemastery'
 
 /** Runtime configuration supplied by the Harness bundle patch. */
 export interface Config {
