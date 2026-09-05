@@ -1,0 +1,15 @@
+{
+  "interfaceFamily": "IMA-HIF-3",
+  "adapter": "IMA-ADAPTER-GATEWAY",
+  "previousTag": "dsh-v0.1.2-alpha.1",
+  "interfaceDelta": [
+    "Public settingsNamespace helper removed; raw namespace strings accepted.",
+    "Gateway Remote failure vocabulary changed while normalized credential semantics stayed equivalent."
+  ],
+  "evidence": [
+    "packages/api/settings-controller/src/credentials.ts: positional credentials Remote",
+    "packages/api/settings-controller/lib/typert.remote-client.d.ts: direct RemoteResult signatures",
+    "packages/api/remotes/src/client/index.ts: credentials contribution mounting",
+    "packages/settings/settings/src/index.ts and packages/core/tools/src/schema.ts"
+  ]
+}

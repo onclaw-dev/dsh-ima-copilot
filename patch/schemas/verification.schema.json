@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["audited", "registry", "packageVerification", "liveSmoke"],
+  "$defs": {
+    "stage": {
+      "type": "object",
+      "required": ["status", "reason"],
+      "properties": {
+        "status": { "enum": ["passed", "failed", "unavailable", "not-run"] },
+        "reason": { "type": "string", "minLength": 1 },
+        "evidence": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "audited": { "$ref": "#/$defs/stage" },
+    "registry": { "$ref": "#/$defs/stage" },
+    "packageVerification": { "$ref": "#/$defs/stage" },
+    "liveSmoke": { "$ref": "#/$defs/stage" }
+  },
+  "additionalProperties": false
+}

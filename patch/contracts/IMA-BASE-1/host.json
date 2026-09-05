@@ -1,0 +1,41 @@
+{
+  "id": "IMA-BASE-1",
+  "surface": "host",
+  "operations": {
+    "resolveCredential": {
+      "input": [
+        "reference"
+      ],
+      "output": "resolved value or absent",
+      "secrets": "operation-local"
+    },
+    "registerTool": {
+      "input": [
+        "IMA tool definition"
+      ],
+      "output": "disposer"
+    },
+    "registerSettings": {
+      "input": [
+        "namespace",
+        "schema",
+        "base",
+        "validator"
+      ],
+      "output": "watched scope"
+    },
+    "lifecycleEffect": {
+      "input": [
+        "effect",
+        "diagnostic label"
+      ],
+      "output": "disposer ownership"
+    }
+  },
+  "invariants": [
+    "credentials are resolved for every tool call",
+    "settings changes re-register the tool",
+    "tool cancellation is forwarded",
+    "raw Harness Context does not enter business code"
+  ]
+}

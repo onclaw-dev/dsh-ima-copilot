@@ -1,0 +1,31 @@
+{
+  "id": "IMA-BASE-1",
+  "surface": "client",
+  "operations": {
+    "describeCredentials": {
+      "input": [
+        "references"
+      ],
+      "output": "redacted configured/source/writable states"
+    },
+    "setCredential": {
+      "input": [
+        "reference",
+        "non-empty value"
+      ],
+      "output": "void"
+    },
+    "registerSettingsCard": {
+      "input": [
+        "stable slot key",
+        "normalized credentials"
+      ],
+      "output": "slot disposer"
+    }
+  },
+  "invariants": [
+    "credential values never travel through describe",
+    "gateway capability wins when both protocols exist",
+    "unsupported capability fails before slot registration"
+  ]
+}

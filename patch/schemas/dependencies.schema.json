@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["registryReproducible", "packages", "missingPackages"],
+  "properties": {
+    "registryReproducible": { "type": "boolean" },
+    "packages": { "type": "object", "additionalProperties": { "type": "string" } },
+    "missingPackages": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+  },
+  "additionalProperties": false
+}

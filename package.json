@@ -1,8 +1,8 @@
 {
   "name": "dsh-ima-copilot",
-  "version": "0.1.1-rc.2.ima.1",
+  "version": "0.2.2",
   "type": "module",
-  "description": "DSH IMA Copilot 插件：通过 ima_ask 深度问答腾讯 IMA 知识库，含 Web 配置界面",
+  "description": "DeepSeek Harness 的腾讯 IMA 原生工具插件，提供 ima_ask 知识库问答、Web 配置与跨版本契约适配",
   "license": "MIT",
   "author": "omdsh-dev contributors",
   "repository": {
@@ -24,7 +24,8 @@
     "dsh-plugin",
     "deepseek-harness",
     "ima-copilot",
-    "knowledge-base"
+    "knowledge-base",
+    "cross-version-compatibility"
   ],
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
@@ -63,40 +64,37 @@
   },
   "scripts": {
     "build": "tsc --emitDeclarationOnly && tsdown --config tsdown.config.ts",
+    "check:boundaries": "node scripts/check-loader-boundary.mjs",
+    "check:compat": "node scripts/validate-harness-compatibility.mjs && node scripts/generate-harness-audit.mjs --check",
+    "check:client-bundle": "node scripts/verify-client-bundle.mjs",
+    "check:declarations": "node scripts/verify-public-declarations.mjs",
+    "check:package-boundary": "node scripts/verify-package-contents.mjs",
+    "check:harness-boot": "node scripts/verify-harness-boot-graph.mjs",
+    "docs:harness": "node scripts/generate-harness-audit.mjs",
     "check": "tsc --noEmit",
     "link:harness": "node scripts/link-harness.mjs",
     "prepack": "npm run build",
     "test": "vitest run",
     "verify:live": "node scripts/verify-live-ima.mjs",
     "verify:package": "npm pack --dry-run --cache .npm-cache",
-    "verify": "npm run check && npm run test && npm run build"
+    "verify:matrix": "node scripts/verify-harness-matrix.mjs",
+    "verify:matrix:install": "node scripts/verify-harness-matrix.mjs --install",
+    "verify": "npm run check:compat && npm run check:boundaries && npm run check && npm run test && npm run build && npm run check:client-bundle && npm run check:declarations && npm run check:package-boundary && npm run verify:package"
   },
   "publishConfig": {
     "access": "public",
-    "tag": "rc"
+    "tag": "latest"
   },
   "engines": {
     "node": "^22.19.0 || >=24.0.0"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",
-    "@deepseek-ai/dsh-credentials": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-settings": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-tools": "0.1.1-rc.2",
     "@deepseek-ai/schemastery": "^3.18.2",
     "react": "^18.2.0"
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/cordis": {
-      "optional": true
-    },
-    "@deepseek-ai/dsh-credentials": {
-      "optional": true
-    },
-    "@deepseek-ai/dsh-settings": {
-      "optional": true
-    },
-    "@deepseek-ai/dsh-tools": {
       "optional": true
     },
     "@deepseek-ai/schemastery": {

@@ -1,0 +1,11 @@
+{
+  "tag": "dsh-v0.1.0-rc.8",
+  "version": "0.1.0-rc.8",
+  "commit": "141eb6fef83422698aef7a981029e843e8161534",
+  "repository": "https://github.com/deepseek-ai/deepseek-harness",
+  "nodeEngine": "^22.19.0 || >=24.0.0",
+  "base": false,
+  "contract": "IMA-BASE-1",
+  "interfaceFamily": "IMA-HIF-1",
+  "adapter": "IMA-ADAPTER-LEGACY"
+}

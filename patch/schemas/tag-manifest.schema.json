@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["tag", "version", "commit", "repository", "nodeEngine", "base", "contract", "interfaceFamily", "adapter"],
+  "properties": {
+    "tag": { "pattern": "^dsh-v" },
+    "version": { "type": "string" },
+    "commit": { "pattern": "^[0-9a-f]{40}$" },
+    "repository": { "const": "https://github.com/deepseek-ai/deepseek-harness" },
+    "nodeEngine": { "type": "string" },
+    "base": { "type": "boolean" },
+    "contract": { "const": "IMA-BASE-1" },
+    "interfaceFamily": { "enum": ["IMA-HIF-1", "IMA-HIF-2", "IMA-HIF-3"] },
+    "adapter": { "enum": ["IMA-ADAPTER-LEGACY", "IMA-ADAPTER-GATEWAY"] }
+  },
+  "additionalProperties": false
+}

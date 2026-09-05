@@ -1,0 +1,1 @@
+{"version":3,"file":"host-families.d.ts","sourceRoot":"","sources":["../../../src/compat/host-families.ts"],"names":[],"mappings":"AAAA,OAAO,EAAsB,KAAK,eAAe,EAAE,MAAM,WAAW,CAAA;AAEpE,0FAA0F;AAC1F,MAAM,MAAM,sBAAsB,GAAG,WAAW,GAAG,WAAW,GAAG,WAAW,CAAA;AAE5E,eAAO,MAAM,kBAAkB,EAAE,QAAQ,CAAC,MAAM,CAAC,sBAAsB,EAAE,CAAC,OAAO,EAAE,OAAO,KAAK,eAAe,CAAC,CAI9G,CAAA"}

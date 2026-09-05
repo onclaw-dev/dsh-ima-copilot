@@ -1,0 +1,15 @@
+{
+  "interfaceFamily": "IMA-HIF-2",
+  "adapter": "IMA-ADAPTER-GATEWAY",
+  "previousTag": "dsh-v0.1.1-rc.2",
+  "interfaceDelta": [
+    "Credentials moved from connection.api.credentials to generated remote.credentials positional methods and direct results.",
+    "Client Loader has a documented Node 24 defect; source audit only."
+  ],
+  "evidence": [
+    "packages/api/settings-controller/src/credentials.ts: positional credentials Remote",
+    "packages/api/settings-controller/lib/typert.remote-client.d.ts: direct RemoteResult signatures",
+    "packages/api/remotes/src/client/index.ts: credentials contribution mounting",
+    "packages/settings/settings/src/index.ts and packages/core/tools/src/schema.ts"
+  ]
+}

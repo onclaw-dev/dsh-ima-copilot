@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["interfaceFamily", "adapter", "previousTag", "interfaceDelta", "evidence"],
+  "properties": {
+    "interfaceFamily": { "enum": ["IMA-HIF-1", "IMA-HIF-2", "IMA-HIF-3"] },
+    "adapter": { "enum": ["IMA-ADAPTER-LEGACY", "IMA-ADAPTER-GATEWAY"] },
+    "previousTag": { "type": ["string", "null"] },
+    "interfaceDelta": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "evidence": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+  },
+  "additionalProperties": false
+}

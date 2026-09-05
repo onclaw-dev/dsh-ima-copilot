@@ -1,0 +1,14 @@
+{
+  "interfaceFamily": "IMA-HIF-3",
+  "adapter": "IMA-ADAPTER-GATEWAY",
+  "previousTag": "dsh-v0.1.2-alpha.4",
+  "interfaceDelta": [
+    "Plugin-consumed surface only changed Release identity."
+  ],
+  "evidence": [
+    "packages/api/settings-controller/src/credentials.ts: positional credentials Remote",
+    "packages/api/settings-controller/lib/typert.remote-client.d.ts: direct RemoteResult signatures",
+    "packages/api/remotes/src/client/index.ts: credentials contribution mounting",
+    "packages/settings/settings/src/index.ts and packages/core/tools/src/schema.ts"
+  ]
+}

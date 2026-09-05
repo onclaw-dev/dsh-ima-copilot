@@ -1,9 +1,9 @@
-import type { Context } from '@deepseek-ai/cordis'
-import { credentialRef } from '@deepseek-ai/dsh-credentials'
-import { defineTool, type ToolDefinition } from '@deepseek-ai/dsh-tools'
 import type { ResolvedConfig } from './config.js'
 import { ImaClient } from './ima-client.js'
-import type { ImaCredentials } from './types.js'
+import {
+  defineCompatibleTool, type ImaHostContract, type ImaToolDefinition,
+} from './compat/host.js'
+import type { ImaAnswer, ImaCredentials } from './types.js'
 import {
   IMA_KNOWLEDGE_BASE_IDS_REF, IMA_RUNTIME_REFS, IMA_X_IMA_BKN_REF, IMA_X_IMA_COOKIE_REF,
 } from './credential-refs.js'
@@ -18,8 +18,8 @@ export const IMA_TOOL_NAME = 'ima_ask'
  * @param client - IMA transport client.
  * @returns registry-ready native tool definition.
  */
-export function createImaTool(ctx: Context, config: ResolvedConfig, client: ImaClient): ToolDefinition {
-  return defineTool({
+export function createImaTool(host: ImaHostContract, config: ResolvedConfig, client: ImaClient): ImaToolDefinition {
+  return defineCompatibleTool<{ question: string; knowledgeBaseId?: string }, ImaAnswer>({
     name: IMA_TOOL_NAME,
     description: 'Ask Tencent IMA Copilot a question using one configured knowledge base.',
     parameters: {
@@ -63,10 +63,10 @@ export function createImaTool(ctx: Context, config: ResolvedConfig, client: ImaC
       }],
     },
     timeoutMs: config.requestTimeoutMs,
-    async execute(args, exec) {
+    async execute(args: { question: string; knowledgeBaseId?: string }, exec) {
       const question = args.question.trim()
       if (question.length === 0) throw new Error('ima_ask: question must be non-empty')
-      const runtime = await resolveRuntimeState(ctx)
+      const runtime = await resolveRuntimeState(host)
       const knowledgeBaseId = selectKnowledgeBase(runtime.knowledgeBaseIds, args.knowledgeBaseId)
       return client.ask(question, knowledgeBaseId, runtime.credentials, exec.signal)
     },
@@ -84,11 +84,11 @@ export interface ImaRuntimeState {
  * @param ctx - Harness credential provider context.
  * @returns operation-local authentication and knowledge-base allowlist.
  */
-export async function resolveRuntimeState(ctx: Context): Promise<ImaRuntimeState> {
+export async function resolveRuntimeState(host: Pick<ImaHostContract, 'resolveCredential'>): Promise<ImaRuntimeState> {
   const [cookie, bkn, knowledgeBaseIdsValue] = await Promise.all([
-    ctx.credentials.resolve(credentialRef(IMA_X_IMA_COOKIE_REF)),
-    ctx.credentials.resolve(credentialRef(IMA_X_IMA_BKN_REF)),
-    ctx.credentials.resolve(credentialRef(IMA_KNOWLEDGE_BASE_IDS_REF)),
+    host.resolveCredential(IMA_X_IMA_COOKIE_REF),
+    host.resolveCredential(IMA_X_IMA_BKN_REF),
+    host.resolveCredential(IMA_KNOWLEDGE_BASE_IDS_REF),
   ])
   const resolved = [cookie, bkn, knowledgeBaseIdsValue]
   const missing = IMA_RUNTIME_REFS.filter((_, index) => resolved[index]?.value.trim().length === 0 || resolved[index] === undefined)

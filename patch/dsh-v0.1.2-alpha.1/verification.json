@@ -1,0 +1,18 @@
+{
+  "audited": {
+    "status": "passed",
+    "reason": "Immutable official source and the IMA-consumed interface surface were audited on 2026-09-05."
+  },
+  "registry": {
+    "status": "unavailable",
+    "reason": "The exact required provider set is not fully published."
+  },
+  "packageVerification": {
+    "status": "unavailable",
+    "reason": "Exact registry fixture cannot be reproduced because required packages are unpublished."
+  },
+  "liveSmoke": {
+    "status": "not-run",
+    "reason": "No credential-bearing live Web profile was used during this apply run."
+  }
+}

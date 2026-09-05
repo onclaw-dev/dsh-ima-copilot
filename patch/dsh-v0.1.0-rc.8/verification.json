@@ -1,0 +1,19 @@
+{
+  "audited": {
+    "status": "passed",
+    "reason": "Immutable official source and the IMA-consumed interface surface were audited on 2026-09-05."
+  },
+  "registry": {
+    "status": "passed",
+    "reason": "Every exact directly relevant package was confirmed in the npm registry on 2026-09-05."
+  },
+  "packageVerification": {
+    "status": "passed",
+    "reason": "The same unmodified tarball installed with exact tag packages; Client protocols, Host contract, and source boot graph passed on 2026-09-05.",
+    "evidence": "sha256:c8f758887cd1b07f1131db8c406e2157bd24eb33ed04fa7ab340295960cb4c90"
+  },
+  "liveSmoke": {
+    "status": "not-run",
+    "reason": "No credential-bearing live Web profile was used during this apply run."
+  }
+}

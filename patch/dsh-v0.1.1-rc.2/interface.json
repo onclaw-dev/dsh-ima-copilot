@@ -1,0 +1,14 @@
+{
+  "interfaceFamily": "IMA-HIF-1",
+  "adapter": "IMA-ADAPTER-LEGACY",
+  "previousTag": "dsh-v0.1.1-rc.1",
+  "interfaceDelta": [
+    "Machine-readable development baseline; plugin-consumed shapes unchanged."
+  ],
+  "evidence": [
+    "packages/client/connection/src/client/api.ts: CredentialsApi request objects and RpcResponse.result",
+    "packages/settings/settings/src/index.ts: settingsNamespace and SettingsProvider.register",
+    "packages/credentials/credentials/src/index.ts: credentialRef and CredentialProvider.resolve",
+    "packages/core/tools/src/schema.ts: defineTool"
+  ]
+}

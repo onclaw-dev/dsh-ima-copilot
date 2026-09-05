@@ -1,9 +1,6 @@
 /** Native DeepSeek Harness Host plugin for Tencent IMA Copilot. */
-import type { Context } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-credentials'
-import { settingsNamespace, type SettingsScope } from '@deepseek-ai/dsh-settings'
-import type {} from '@deepseek-ai/dsh-tools'
 import { Config, resolveConfig, type Config as ImaPluginConfig } from './config.js'
+import { createHostContract, type ImaSettingsScope } from './compat/host.js'
 import { ImaClient } from './ima-client.js'
 import { createImaTool } from './tool.js'
 
@@ -34,34 +31,30 @@ export const IMA_SETTINGS_NAMESPACE = 'ima-copilot'
  * @param ctx - Harness Host context.
  * @param config - validated bundle configuration.
  */
-export function apply(ctx: Context, config: ImaPluginConfig): void {
-  let settingsScope: SettingsScope<ImaPluginConfig> | undefined
+export function apply(context: unknown, config: ImaPluginConfig): void {
+  const host = createHostContract(context)
+  let settingsScope: ImaSettingsScope<ImaPluginConfig> | undefined
   const source = (): ImaPluginConfig => settingsScope?.get() ?? config
   let disposeTool: () => void = () => {}
   const registerTool = (): void => {
     disposeTool()
     const resolved = resolveConfig(source())
-    disposeTool = ctx.tools.register(createImaTool(ctx, resolved, new ImaClient(resolved)))
+    disposeTool = host.registerTool(createImaTool(host, resolved, new ImaClient(resolved)))
   }
 
-  ctx.effect(() => {
+  host.effect(() => {
     registerTool()
     return () => { disposeTool() }
   }, 'ima-copilot: native tool registration')
 
-  ctx.inject(['settings'], (settingsCtx) => {
-    const scope = settingsCtx.settings.register(
-      settingsNamespace(IMA_SETTINGS_NAMESPACE),
-      Config,
-      {
-        base: config,
-        validate: (value) => { resolveConfig(value) },
-      },
-    )
+  host.withSettings(IMA_SETTINGS_NAMESPACE, Config, {
+    base: config,
+    validate: (value) => { resolveConfig(value) },
+  }, (scope, settingsHost) => {
     settingsScope = scope
     registerTool()
     const unwatch = scope.watch(() => { registerTool() })
-    settingsCtx.effect(() => () => {
+    settingsHost.effect(() => () => {
       unwatch()
       if (settingsScope === scope) settingsScope = undefined
     }, 'ima-copilot: settings section')

@@ -18,30 +18,56 @@
 ## 环境要求
 
 - Node.js `^22.19.0` 或 `>=24.0.0`
-- DSH `0.1.1-rc.2`
+- DSH：以[兼容验证矩阵](#兼容验证矩阵)中“同包测试”为“通过”的 Release 为准
 - Web profile 需要 `@deepseek-ai/dsh-client-ui-settings-plugins`
 
-本版本对应 DeepSeek Harness Release
+本仓库唯一的开发与类型检查基线仍为 DeepSeek Harness Release
 [`dsh-v0.1.1-rc.2`](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.1.1-rc.2) 和提交
-[`b150a551b8d465e31e418e1b2eaf5e79bbb7d28e`](https://github.com/deepseek-ai/deepseek-harness/commit/b150a551b8d465e31e418e1b2eaf5e79bbb7d28e)。`package.json` 中的 `deepseekHarness` 记录了这一源码基线；本地链接脚本会同时校验提交和版本，避免误用其他破坏性迭代节点。
+[`b150a551b8d465e31e418e1b2eaf5e79bbb7d28e`](https://github.com/deepseek-ai/deepseek-harness/commit/b150a551b8d465e31e418e1b2eaf5e79bbb7d28e)。它只是构建锚点，不再等同于插件唯一支持的 Harness 版本。`package.json.deepseekHarness` 继续记录这一基线，其他 Release 通过接口族档案和同一 tarball 矩阵验证。
 
-当前插件版本为 `0.1.1-rc.2.ima.1`，npm `latest` 和 `rc` 通道对应这一经过验证的 Harness rc.2 基线。`alpha` 通道继续保留 `0.1.2-alpha.2.ima.1`，仅用于跟随 Harness alpha 测试线。
+### 跨版本兼容模型
+
+开发与构建基线仍唯一固定为 `dsh-v0.1.1-rc.2`。插件通过内部契约 `IMA-BASE-1` 隔离 Harness 接口差异：旧版 Client 使用 `connection.api.credentials`，新版使用 `remote.credentials`，运行时按完整能力形状选择协议，不比较版本字符串。Host 的凭证、设置和工具生命周期经同一结构适配层归一化。
+
+完整身份、接口差异和证据见 [兼容档案](./docs/harness-interface-contract-audit.md)，机器事实以 [`patch/index.json`](./patch/index.json) 及各 tag 的 `verification.json` 为准。
+
+### 兼容验证矩阵
+
+最后审计日期：2026-09-05。同包测试使用同一个未改写 tarball；SHA-256 记录在包外的逐 tag 机器验证档案中，避免发布包记录自身摘要。
+
+| DeepSeek Harness Release | Commit | 接口族 / Client 适配 | 源码审计 | 精确 npm 包 | 同包测试 | Live smoke | 结论与备忘 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `dsh-v0.1.0-rc.7` | `99f6f02fecdb` | `IMA-HIF-1` / legacy | 通过 | 可用 | 通过 | 未执行 | 已验证 |
+| `dsh-v0.1.0-rc.8` | `141eb6fef834` | `IMA-HIF-1` / legacy | 通过 | 可用 | 通过 | 未执行 | 已验证 |
+| `dsh-v0.1.1-rc.1` | `528c682e0616` | `IMA-HIF-1` / legacy | 通过 | 可用 | 通过 | 未执行 | 已验证 |
+| `dsh-v0.1.1-rc.2` | `b150a551b8d4` | `IMA-HIF-1` / legacy | 通过 | 可用 | 通过 | 未执行 | 已验证；当前开发基线 |
+| `dsh-v0.1.2-alpha.1` | `cd5ef8148158` | `IMA-HIF-2` / gateway | 通过 | 不完整 | 不可执行 | 未执行 | 仅源码审计；Node 24 Client Loader 缺陷，排除运行时支持 |
+| `dsh-v0.1.2-alpha.2` | `0a53fb55bea1` | `IMA-HIF-3` / gateway | 通过 | 可用 | 通过 | 未执行 | 已验证 |
+| `dsh-v0.1.2-alpha.3` | `dd6322d604e0` | `IMA-HIF-3` / gateway | 通过 | 可用 | 通过 | 未执行 | 已验证 |
+| `dsh-v0.1.2-alpha.4` | `4e84901e6471` | `IMA-HIF-3` / gateway | 通过 | 可用 | 通过 | 未执行 | 已验证 |
+| `dsh-v0.1.2-alpha.5` | `db6bdc3576c2` | `IMA-HIF-3` / gateway | 通过 | 可用 | 通过 | 未执行 | 已验证 |
+| `dsh-v0.1.2-rc.1` | `a66e47020478` | `IMA-HIF-3` / gateway | 通过 | 可用 | 通过 | 未执行 | 已验证 |
+| `dsh-v0.1.3-alpha.1` | `d347e703908d` | `IMA-HIF-3` / gateway | 通过 | 不完整 | 不可执行 | 未执行 | 仅源码审计；不得声明 registry 安装支持 |
+
+“同包测试通过”表示精确 Release 依赖、无跨 Release 混装、Client boot graph、适配器选路及 Host 契约测试均通过；不代表使用真实 IMA 凭证完成了在线调用。只有环境中已有有效凭证和 Web profile 时才执行 Live smoke。
+
+### 插件版本策略
+
+- 插件版本从跨版本契约适配线 `0.2.1` 开始独立迭代，使用普通 SemVer，例如 `0.2.1`、`0.2.2`、`0.3.0`；不再把某个 Harness 版本编码进插件版本号。
+- `0.2.0` 是历史上的 `dsh-loader` 兼容版本；该方案已经回退，不再作为后续实现或版本规则的基础。
+- `0.2.1` 是回退 loader 后、采用显式契约与接口族适配方案的版本线起点。后续兼容修复顺序递增 patch 版本；插件能力或兼容策略发生向后兼容扩展时递增 minor，破坏插件公开契约时递增 major。
+- 当前插件版本为 `0.2.2`。npm 版本和 Git tag 不得覆盖；发布前必须查询目标版本尚未被占用。
+- Git tag 使用 `v<plugin-version>`，例如 `v0.2.2`。Harness 支持范围以本表和机器档案为准，不由插件版本字符串推断。
 
 > 本插件调用的是 IMA Web API，而非公开稳定 API；上游接口变化可能导致插件需要同步适配。
 
 ## 安装
 
-安装当前默认版本（Harness `0.1.1-rc.2` 基线）：
+安装 npm 当前默认版本：
 
 ```powershell
 dsh plugin --profile web add dsh-ima-copilot
 dsh web
-```
-
-如需显式安装 Harness alpha 测试线对应的历史版本：
-
-```powershell
-dsh plugin --profile web add dsh-ima-copilot@alpha
 ```
 
 使用 GitHub 地址进行安装：
@@ -59,7 +85,7 @@ npm ci
 npm run link:harness -- <本地 DSH 仓库路径>
 npm run verify
 npm pack
-dsh plugin --profile web add .\dsh-ima-copilot-0.1.1-rc.2.ima.1.tgz
+dsh plugin --profile web add .\dsh-ima-copilot-<version>.tgz
 dsh web
 ```
 
@@ -137,6 +163,8 @@ npm run check
 npm test
 npm run build
 npm run verify:package
+npm run check:harness-boot
+npm run verify:matrix
 ```
 
 当前 `0.1.1-rc.2` 的 DSH 开发包可由上述精确提交的本地 DSH 源码提供。链接脚本不会把 monorepo 根目录冒充某个 workspace 包；它会校验提交后，分别链接插件实际使用的包。链接完成后也可以用一条命令执行类型检查、测试和构建：
@@ -144,6 +172,8 @@ npm run verify:package
 ```powershell
 npm run verify
 ```
+
+`npm run verify:matrix` 只构建并准备隔离矩阵；`npm run verify:matrix:install` 会联网安装每个 tag 的精确 provider，并验证所有 fixture 使用同一个未改写 tarball。真实环境验证仍使用 `npm run verify:live`，缺少既有有效凭证时应记录为未运行，不能据此提升兼容声明。
 
 在 Web profile 已配置有效凭证后，可执行真实连通性测试。该命令不会输出凭证明文或答案正文：
 
