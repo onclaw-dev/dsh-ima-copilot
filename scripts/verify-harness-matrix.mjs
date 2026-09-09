@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
@@ -10,6 +10,7 @@ import { assertImmutableMatrixResults } from './harness-matrix-contract.mjs'
 
 const root = resolve(import.meta.dirname, '..')
 const install = process.argv.includes('--install')
+const tarballInput = process.argv.find(value => value.startsWith('--tarball='))?.slice('--tarball='.length)
 const checkoutsRoot = resolve(process.argv.find(value => value.startsWith('--checkouts='))?.slice('--checkouts='.length) ?? '/Users/roncao/deepseek-harness')
 const temporaryRoot = mkdtempSync(join(tmpdir(), 'dsh-ima-matrix-'))
 const packRoot = join(temporaryRoot, 'pack')
@@ -102,9 +103,15 @@ function smokePackedClient(fixture, interfaceFamily) {
 }
 
 try {
-  run('npm', ['run', 'build'])
-  const packed = JSON.parse(run('npm', ['pack', '--json', '--pack-destination', packRoot, '--ignore-scripts']))
-  const tarball = join(packRoot, packed[0].filename)
+  let tarball
+  if (tarballInput) {
+    tarball = resolve(tarballInput)
+    assert.ok(existsSync(tarball), `tarball does not exist: ${tarball}`)
+  } else {
+    run('npm', ['run', 'build'])
+    const packed = JSON.parse(run('npm', ['pack', '--json', '--pack-destination', packRoot, '--ignore-scripts']))
+    tarball = join(packRoot, packed[0].filename)
+  }
   const digest = createHash('sha256').update(readFileSync(tarball)).digest('hex')
   const snapshot = validateHarnessCompatibility(root)
   const results = []

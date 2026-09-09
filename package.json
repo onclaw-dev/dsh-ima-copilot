@@ -1,6 +1,6 @@
 {
   "name": "dsh-ima-copilot",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "type": "module",
   "description": "DeepSeek Harness 的腾讯 IMA 原生工具插件，提供 ima_ask 知识库问答、Web 配置与跨版本契约适配",
   "license": "MIT",
