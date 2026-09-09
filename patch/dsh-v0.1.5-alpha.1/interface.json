@@ -1,0 +1,17 @@
+{
+  "interfaceFamily": "IMA-HIF-3",
+  "adapter": "IMA-ADAPTER-GATEWAY",
+  "previousTag": "dsh-v0.1.3-alpha.2",
+  "interfaceDelta": [
+    "IMA remains on IMA-HIF-3: positional credentials Remote and direct RemoteResult semantics are unchanged.",
+    "The Remote assembly adds workspaceFiles, scoped Remote events carry Agent identity directly, and PTC event names change; none are consumed by IMA.",
+    "Host credentials/settings/tool registration and settings.plugin.item lifecycle shapes remain compatible."
+  ],
+  "evidence": [
+    "packages/api/settings-controller/src/credentials.ts: describe(refs) and set(ref, value) unchanged",
+    "packages/api/remotes/src/client/index.ts: settings-controller contribution retained while workspaceFiles is added",
+    "packages/api/gateway/src/types.ts and packages/api/remotes/src/index.ts: scoped event identity change is outside IMA calls",
+    "packages/client/ui-settings-plugins/src/client/index.ts and packages/client/ui-renderer/src/client/registry.ts: credential and slot readiness contract unchanged",
+    "packages/credentials/credentials/src/index.ts, packages/settings/settings/src/index.ts, and packages/core/tools/src/index.ts: IMA Host calls unchanged"
+  ]
+}

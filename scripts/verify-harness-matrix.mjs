@@ -70,24 +70,33 @@ function smokePackedClient(fixture, interfaceFamily) {
   vm.runInNewContext(bundle, { window }, { filename: 'dsh-ima-copilot/lib/client.js' })
   assert.equal(typeof contribution.apply, 'function')
   let registration
+  let installSlot
   const slots = {
-    inject(_name, install) { return install() },
+    inject(name, install) {
+      assert.equal(name, 'settings.plugin.item')
+      installSlot = install
+      return () => {}
+    },
     register(options) { registration = options; return () => {} },
   }
   const legacy = { describe() {}, set() {} }
   const gateway = { describe() {}, set() {} }
   const gatewayFamily = interfaceFamily !== 'IMA-HIF-1'
   const ctx = {
-    slots, ...(gatewayFamily ? { remote: { credentials: gateway } } : {}),
+    slots, ...(gatewayFamily ? { remote: {} } : {}),
     get(name) {
       if (name === 'slots') return slots
       if (name === 'connection') return { api: { credentials: legacy } }
       if (gatewayFamily && name === 'remote') return this.remote
-      if (gatewayFamily && name === 'remote.credentials') return gateway
+      if (gatewayFamily && name === 'remote.credentials') return this.remote.credentials
       return undefined
     },
   }
   contribution.apply(ctx)
+  assert.equal(registration, undefined, `${interfaceFamily}: registration must wait for its slot declaration`)
+  if (gatewayFamily) ctx.remote.credentials = gateway
+  assert.equal(typeof installSlot, 'function')
+  installSlot()
   assert.equal(registration.key, 'ima-copilot')
   assert.equal(registration.inject().credentials.adapter, gatewayFamily ? 'IMA-CLIENT-GATEWAY' : 'IMA-CLIENT-LEGACY')
 }

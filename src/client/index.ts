@@ -12,12 +12,17 @@ export const inject = ['slots', 'connection', 'remote']
  */
 export function apply(ctx: ImaClientContext): void {
   const slots = getSlotsClient(ctx)
-  const credentials = createClientCredentials(ctx)
-  slots.inject('settings.plugin.item', () => slots.register({
-    name: 'settings.plugin.item',
-    key: 'ima-copilot',
-    inject: (): ImaSettingsCardFace => ({ credentials }),
-  }, ImaSettingsCard))
+  slots.inject('settings.plugin.item', () => {
+    // The slot owner is lifecycle-gated on the credentials service for its
+    // Harness interface family. Resolve the native protocol only after that
+    // declaration becomes live, and resolve it again if the owner remounts.
+    const credentials = createClientCredentials(ctx)
+    return slots.register({
+      name: 'settings.plugin.item',
+      key: 'ima-copilot',
+      inject: (): ImaSettingsCardFace => ({ credentials }),
+    }, ImaSettingsCard)
+  })
 }
 
 export { ImaSettingsCard } from './ImaSettingsCard.js'

@@ -1,0 +1,16 @@
+{
+  "interfaceFamily": "IMA-HIF-3",
+  "adapter": "IMA-ADAPTER-GATEWAY",
+  "previousTag": "dsh-v0.1.3-alpha.1",
+  "interfaceDelta": [
+    "IMA remains on IMA-HIF-3: credentials Remote, Host settings/credentials/tools, slot lifecycle, and provider injection shapes are unchanged.",
+    "Connection recovery configuration and Web composition changed outside the IMA-consumed interface."
+  ],
+  "evidence": [
+    "packages/api/settings-controller/src/credentials.ts: positional credentials Remote unchanged",
+    "packages/client/ui-settings-plugins/src/client/index.ts: remote.credentials readiness precedes settings.plugin.item ownership",
+    "packages/client/ui-renderer/src/client/registry.ts: slot declaration injection lifecycle unchanged",
+    "packages/credentials/credentials/src/index.ts, packages/settings/settings/src/index.ts, and packages/core/tools/src/index.ts: IMA Host calls unchanged",
+    "packages/client/connection/src/recovery-config.ts and packages/bundle/web-app/cordis.patch.yml: non-IMA recovery/composition changes"
+  ]
+}

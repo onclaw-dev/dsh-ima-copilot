@@ -25,15 +25,55 @@ describe('IMA capability-routed Client registration', () => {
     expect(createClientCredentials(ctx).adapter).toBe('IMA-CLIENT-LEGACY')
   })
 
-  it('contains throwing getters and rejects partial protocols before registration', () => {
+  it('contains throwing getters while an undeclared slot keeps capability resolution parked', () => {
     const register = vi.fn()
     const ctx = {
       slots: { inject: vi.fn(), register }, remote: { credentials: { describe: vi.fn() } },
       get: vi.fn(() => { throw new Error('strict missing service') }),
     }
-    expect(() => apply(ctx)).toThrow(UnsupportedHarnessClientError)
+    expect(() => apply(ctx)).not.toThrow()
     expect(register).not.toHaveBeenCalled()
-    expect(ctx.slots.inject).not.toHaveBeenCalled()
+    expect(ctx.slots.inject).toHaveBeenCalledWith('settings.plugin.item', expect.any(Function))
+  })
+
+  it('rejects partial protocols when the settings card slot is already live', () => {
+    const slots = slotsFixture()
+    const ctx = {
+      slots,
+      remote: { credentials: { describe: vi.fn() } },
+      get: vi.fn(() => { throw new Error('strict missing service') }),
+    }
+    expect(() => apply(ctx)).toThrow(UnsupportedHarnessClientError)
+    expect(slots.register).not.toHaveBeenCalled()
+  })
+
+  it('waits for the settings card slot before resolving Gateway credentials', () => {
+    let install: (() => unknown) | undefined
+    const register = vi.fn(() => vi.fn())
+    const gateway = { describe: vi.fn(), set: vi.fn() }
+    const ctx = {
+      slots: {
+        inject: vi.fn((_name: string, callback: () => unknown) => { install = callback }),
+        register,
+      },
+      remote: {} as { credentials?: typeof gateway },
+      get(name: string) {
+        if (name === 'slots') return this.slots
+        if (name === 'remote') return this.remote
+        if (name === 'remote.credentials') return this.remote.credentials
+        return undefined
+      },
+    }
+
+    expect(() => apply(ctx)).not.toThrow()
+    expect(register).not.toHaveBeenCalled()
+
+    ctx.remote.credentials = gateway
+    expect(install).toBeTypeOf('function')
+    expect(() => install?.()).not.toThrow()
+    expect(register).toHaveBeenCalledTimes(1)
+    const [options] = register.mock.calls[0]!
+    expect(options.inject().credentials.adapter).toBe('IMA-CLIENT-GATEWAY')
   })
 
   it('registers one keyed card with normalized credentials', () => {

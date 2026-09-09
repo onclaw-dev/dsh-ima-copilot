@@ -10,6 +10,7 @@ const expectedTags = [
   'dsh-v0.1.0-rc.7', 'dsh-v0.1.0-rc.8', 'dsh-v0.1.1-rc.1', 'dsh-v0.1.1-rc.2',
   'dsh-v0.1.2-alpha.1', 'dsh-v0.1.2-alpha.2', 'dsh-v0.1.2-alpha.3',
   'dsh-v0.1.2-alpha.4', 'dsh-v0.1.2-alpha.5', 'dsh-v0.1.2-rc.1', 'dsh-v0.1.3-alpha.1',
+  'dsh-v0.1.3-alpha.2', 'dsh-v0.1.5-alpha.1',
 ]
 
 export function readCompatibilityCatalog(root = defaultRoot) {

@@ -9,8 +9,8 @@
   },
   "packageVerification": {
     "status": "passed",
-    "reason": "The same unmodified tarball installed with exact tag packages; Client protocols, Host contract, and source boot graph passed on 2026-09-05.",
-    "evidence": "sha256:c8f758887cd1b07f1131db8c406e2157bd24eb33ed04fa7ab340295960cb4c90"
+    "reason": "The same lifecycle-fixed unmodified tarball installed with exact tag packages; Client protocols, Host contract, source boot graph, and delayed credentials readiness passed on 2026-09-09.",
+    "evidence": "sha256:6e4ba9147879fe7e37f92b113c08c80b8a046c30dde385d40987c1e8ef3f6349"
   },
   "liveSmoke": {
     "status": "not-run",

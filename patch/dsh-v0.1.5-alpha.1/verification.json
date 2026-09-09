@@ -1,0 +1,19 @@
+{
+  "audited": {
+    "status": "passed",
+    "reason": "Official tag commit and the complete IMA-consumed diff were audited on 2026-09-09."
+  },
+  "registry": {
+    "status": "passed",
+    "reason": "Every exact directly relevant package was confirmed in the npm registry on 2026-09-09."
+  },
+  "packageVerification": {
+    "status": "passed",
+    "reason": "The same lifecycle-fixed unmodified tarball installed with exact tag packages; Client protocols, Host contract, source boot graph, and delayed credentials readiness passed on 2026-09-09.",
+    "evidence": "sha256:6e4ba9147879fe7e37f92b113c08c80b8a046c30dde385d40987c1e8ef3f6349"
+  },
+  "liveSmoke": {
+    "status": "not-run",
+    "reason": "No credential-bearing live Web profile was used during this apply run."
+  }
+}

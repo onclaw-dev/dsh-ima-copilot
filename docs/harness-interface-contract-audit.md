@@ -21,6 +21,8 @@
 | `dsh-v0.1.2-alpha.5` | `db6bdc3576c2d4e7c965e8e3ed0c2a731eed87f5` | `IMA-HIF-3` | `IMA-ADAPTER-GATEWAY` | passed | passed | passed | not-run |
 | `dsh-v0.1.2-rc.1` | `a66e4702047846cdaa10c66c9d3df3951f5ea70d` | `IMA-HIF-3` | `IMA-ADAPTER-GATEWAY` | passed | passed | passed | not-run |
 | `dsh-v0.1.3-alpha.1` | `d347e703908d0406b7a7ef80e3a0e594d86b2215` | `IMA-HIF-3` | `IMA-ADAPTER-GATEWAY` | passed | unavailable | unavailable | not-run |
+| `dsh-v0.1.3-alpha.2` | `82a5fd61a7cf5c293cec4bdff68f455398d685e9` | `IMA-HIF-3` | `IMA-ADAPTER-GATEWAY` | passed | passed | passed | not-run |
+| `dsh-v0.1.5-alpha.1` | `5dda764ed3aa172535a7967b06ff95d9cbfe536a` | `IMA-HIF-3` | `IMA-ADAPTER-GATEWAY` | passed | passed | passed | not-run |
 
 ## 接口差异
 
@@ -35,6 +37,8 @@
 - `dsh-v0.1.2-alpha.5`：Plugin-consumed surface only changed Release identity.
 - `dsh-v0.1.2-rc.1`：Plugin-consumed surface only changed Release identity.
 - `dsh-v0.1.3-alpha.1`：Plugin-consumed IMA surface remains in IMA-HIF-3; exact npm provider set is unpublished.
+- `dsh-v0.1.3-alpha.2`：IMA remains on IMA-HIF-3: credentials Remote, Host settings/credentials/tools, slot lifecycle, and provider injection shapes are unchanged.；Connection recovery configuration and Web composition changed outside the IMA-consumed interface.
+- `dsh-v0.1.5-alpha.1`：IMA remains on IMA-HIF-3: positional credentials Remote and direct RemoteResult semantics are unchanged.；The Remote assembly adds workspaceFiles, scoped Remote events carry Agent identity directly, and PTC event names change; none are consumed by IMA.；Host credentials/settings/tool registration and settings.plugin.item lifecycle shapes remain compatible.
 
 ## 状态语义
 
