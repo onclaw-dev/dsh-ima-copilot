@@ -1,4 +1,4 @@
-import type { ResolvedConfig } from './config.js'
+import type { ConfigSource } from './config.js'
 import { ImaClient } from './ima-client.js'
 import {
   defineCompatibleTool, type ImaHostContract, type ImaToolDefinition,
@@ -18,8 +18,8 @@ export const IMA_TOOL_NAME = 'ima_ask'
  * @param client - IMA transport client.
  * @returns registry-ready native tool definition.
  */
-export function createImaTool(host: ImaHostContract, config: ResolvedConfig, client: ImaClient): ImaToolDefinition {
-  return defineCompatibleTool<{ question: string; knowledgeBaseId?: string }, ImaAnswer>({
+export function createImaTool(host: ImaHostContract, config: ConfigSource, client: ImaClient): ImaToolDefinition {
+  const tool = defineCompatibleTool<{ question: string; knowledgeBaseId?: string }, ImaAnswer>({
     name: IMA_TOOL_NAME,
     description: 'Ask Tencent IMA Copilot a question using one configured knowledge base.',
     parameters: {
@@ -62,7 +62,6 @@ export function createImaTool(host: ImaHostContract, config: ResolvedConfig, cli
         text: renderAnswer(value.answer, value.references),
       }],
     },
-    timeoutMs: config.requestTimeoutMs,
     async execute(args: { question: string; knowledgeBaseId?: string }, exec) {
       const question = args.question.trim()
       if (question.length === 0) throw new Error('ima_ask: question must be non-empty')
@@ -71,6 +70,11 @@ export function createImaTool(host: ImaHostContract, config: ResolvedConfig, cli
       return client.ask(question, knowledgeBaseId, runtime.credentials, exec.signal)
     },
   })
+  Object.defineProperty(tool, 'timeoutMs', {
+    enumerable: true,
+    get: () => config().requestTimeoutMs,
+  })
+  return tool
 }
 
 /** Dynamic IMA state checked immediately before one tool operation. */
@@ -94,7 +98,7 @@ export async function resolveRuntimeState(host: Pick<ImaHostContract, 'resolveCr
   const missing = IMA_RUNTIME_REFS.filter((_, index) => resolved[index]?.value.trim().length === 0 || resolved[index] === undefined)
   if (missing.length > 0) {
     throw new Error(
-      `ima_ask: configuration check failed; configure ${missing.join(', ')} in Settings > Plugins > Configurable > IMA Copilot`,
+      `ima_ask: configuration check failed; configure ${missing.join(', ')} in Settings > Plugins > IMA Copilot`,
     )
   }
   const knowledgeBaseIds = parseKnowledgeBaseIds(knowledgeBaseIdsValue!.value)

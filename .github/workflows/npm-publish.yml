@@ -1,0 +1,106 @@
+name: Build and publish npm package
+
+on:
+  push:
+    tags: ["v*"]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and pack
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Validate release tag and package version
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          package_version="$(node -p "require('./package.json').version")"
+          lock_version="$(node -p "require('./package-lock.json').version")"
+          lock_root_version="$(node -p "require('./package-lock.json').packages[''].version")"
+          test "$GITHUB_REF_NAME" = "v$package_version"
+          test "$version" = "$lock_version"
+          test "$version" = "$lock_root_version"
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify and build
+        run: npm run verify
+      - name: Pack exact npm artifact
+        shell: bash
+        run: |
+          mkdir -p dist/npm
+          npm pack --ignore-scripts --pack-destination dist/npm
+          (cd dist/npm && sha256sum ./*.tgz > SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-dist
+          path: |
+            dist/npm/*.tgz
+            dist/npm/SHA256SUMS
+          if-no-files-found: error
+
+  publish-npm:
+    name: Publish npm package
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+      - name: Install npm with Trusted Publishing support
+        run: npm install --global npm@^11.5.1
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-dist
+          path: dist/npm
+      - name: Publish exact package
+        shell: bash
+        env:
+          PACKAGE_NAME: dsh-ima-copilot
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if npm view "$PACKAGE_NAME@$version" version >/dev/null 2>&1; then
+            echo "$PACKAGE_NAME@$version already exists; skipping npm publish"
+          else
+            npm publish dist/npm/*.tgz --access public --tag latest
+          fi
+
+  publish-github:
+    name: Publish GitHub Release
+    needs: [build, publish-npm]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-dist
+          path: release-assets
+      - name: Create or update GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" release-assets/* --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$RELEASE_TAG" release-assets/* \
+              --generate-notes \
+              --verify-tag \
+              --repo "$GITHUB_REPOSITORY"
+          fi

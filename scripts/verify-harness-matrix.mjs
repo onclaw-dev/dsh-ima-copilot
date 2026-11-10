@@ -10,6 +10,8 @@ import { assertImmutableMatrixResults } from './harness-matrix-contract.mjs'
 
 const root = resolve(import.meta.dirname, '..')
 const install = process.argv.includes('--install')
+const record = process.argv.includes('--record')
+assert.ok(!record || install, '--record requires --install')
 const tarballInput = process.argv.find(value => value.startsWith('--tarball='))?.slice('--tarball='.length)
 const checkoutsRoot = resolve(process.argv.find(value => value.startsWith('--checkouts='))?.slice('--checkouts='.length) ?? '/Users/roncao/deepseek-harness')
 const temporaryRoot = mkdtempSync(join(tmpdir(), 'dsh-ima-matrix-'))
@@ -60,8 +62,7 @@ function releaseOverrides(checkout, version) {
   return overrides
 }
 
-function smokePackedClient(fixture, interfaceFamily) {
-  const bundle = readFileSync(join(fixture, 'node_modules/dsh-ima-copilot/lib/client.js'), 'utf8')
+function smokePackedClientBundle(bundle, interfaceFamily) {
   let contribution
   const react = {
     useCallback: value => value, useEffect() {}, useState: value => [value, () => {}],
@@ -74,32 +75,41 @@ function smokePackedClient(fixture, interfaceFamily) {
   let installSlot
   const slots = {
     inject(name, install) {
-      assert.equal(name, 'settings.plugin.item')
+      assert.equal(name, 'settings.section')
       installSlot = install
       return () => {}
     },
     register(options) { registration = options; return () => {} },
   }
-  const legacy = { describe() {}, set() {} }
   const gateway = { describe() {}, set() {} }
+  const legacy = { describe() {}, set() {} }
   const gatewayFamily = interfaceFamily !== 'IMA-HIF-1'
   const ctx = {
-    slots, ...(gatewayFamily ? { remote: {} } : {}),
+    slots,
     get(name) {
       if (name === 'slots') return slots
       if (name === 'connection') return { api: { credentials: legacy } }
-      if (gatewayFamily && name === 'remote') return this.remote
-      if (gatewayFamily && name === 'remote.credentials') return this.remote.credentials
+      if (gatewayFamily && name === 'remote.credentials') return gateway
       return undefined
     },
   }
   contribution.apply(ctx)
-  assert.equal(registration, undefined, `${interfaceFamily}: registration must wait for its slot declaration`)
-  if (gatewayFamily) ctx.remote.credentials = gateway
-  assert.equal(typeof installSlot, 'function')
+  assert.equal(typeof installSlot, 'function', `${interfaceFamily}: section lifecycle callback`)
   installSlot()
-  assert.equal(registration.key, 'ima-copilot')
-  assert.equal(registration.inject().credentials.adapter, gatewayFamily ? 'IMA-CLIENT-GATEWAY' : 'IMA-CLIENT-LEGACY')
+  assert.equal(registration.id, 'ima-copilot')
+  assert.equal(registration.name, 'settings.section')
+  assert.equal(registration.inject().credentials.adapter,
+    gatewayFamily ? 'IMA-CLIENT-GATEWAY' : 'IMA-CLIENT-LEGACY')
+}
+
+function smokeSourceInterfaces(checkout, interfaceFamily) {
+  const read = relative => readFileSync(join(checkout, relative), 'utf8')
+  const settings = read('packages/client/ui-settings/src/client/contract/slots.ts')
+  const tools = read('packages/core/tools/src/index.ts')
+  const credentials = read('packages/credentials/credentials/src/index.ts')
+  assert.match(settings, /settings\.section/u, `${interfaceFamily}: settings.section source contract`)
+  assert.match(tools, /register\(definition: ToolDefinition/u, `${interfaceFamily}: tools.register source contract`)
+  assert.match(credentials, /resolve\(ref: CredentialRef\)/u, `${interfaceFamily}: credentials.resolve source contract`)
 }
 
 try {
@@ -113,16 +123,23 @@ try {
     tarball = join(packRoot, packed[0].filename)
   }
   const digest = createHash('sha256').update(readFileSync(tarball)).digest('hex')
+  const packedClientBundle = run('tar', ['-xOf', tarball, 'package/lib/client.js'])
   const snapshot = validateHarnessCompatibility(root)
   const results = []
   for (const record of snapshot.records) {
+    const checkout = join(checkoutsRoot, record.manifest.tag)
+    assert.equal(run('git', ['-C', checkout, 'rev-parse', 'HEAD']).trim(), record.manifest.commit, `${record.manifest.tag}: checkout commit`)
+    smokeSourceInterfaces(checkout, record.manifest.interfaceFamily)
     if (!record.dependencies.registryReproducible) {
-      results.push({ tag: record.manifest.tag, status: 'unavailable', reason: record.dependencies.missingPackages.join(', ') })
+      smokePackedClientBundle(packedClientBundle, record.manifest.interfaceFamily)
+      results.push({
+        tag: record.manifest.tag,
+        status: 'source-passed',
+        reason: `registry unavailable: ${record.dependencies.missingPackages.join(', ')}`,
+      })
       continue
     }
     const fixture = join(temporaryRoot, record.manifest.tag); mkdirSync(fixture)
-    const checkout = join(checkoutsRoot, record.manifest.tag)
-    assert.equal(run('git', ['-C', checkout, 'rev-parse', 'HEAD']).trim(), record.manifest.commit, `${record.manifest.tag}: checkout commit`)
     writeFileSync(join(fixture, 'package.json'), JSON.stringify({
       name: `ima-matrix-${record.manifest.version.replaceAll('.', '-')}`, private: true, version: '0.0.0',
       dependencies: { ...record.dependencies.packages, 'dsh-ima-copilot': `file:${tarball}` },
@@ -137,11 +154,30 @@ try {
         assert.equal(resolved.version, version, `${record.manifest.tag}: mixed ${name}`)
       }
       assertResolvedRelease(installedTree(fixture), record.manifest.version, record.manifest.tag)
-      smokePackedClient(fixture, record.manifest.interfaceFamily)
+      smokePackedClientBundle(
+        readFileSync(join(fixture, 'node_modules/dsh-ima-copilot/lib/client.js'), 'utf8'),
+        record.manifest.interfaceFamily,
+      )
     }
     results.push({ tag: record.manifest.tag, status: install ? 'passed' : 'prepared', tarballSha256: digest })
   }
-  assertImmutableMatrixResults(results)
+  assertImmutableMatrixResults(results, snapshot)
+  if (record) {
+    const statusByTag = new Map(results.map(row => [row.tag, row.status]))
+    const recorded = {
+      ...snapshot.matrix,
+      verifiedAt: new Date().toISOString().slice(0, 10),
+      tarballSha256: digest,
+      results: snapshot.matrix.results.map(row => ({
+        ...row,
+        sourceAudit: 'passed',
+        registry: statusByTag.get(row.tag) === 'source-passed' ? 'unavailable' : 'passed',
+        packageSmoke: statusByTag.get(row.tag) === 'source-passed' ? 'unavailable' : 'passed',
+        bundleSmoke: 'passed',
+      })),
+    }
+    writeFileSync(resolve(root, 'patch/verification/matrix.json'), `${JSON.stringify(recorded, null, 2)}\n`)
+  }
   console.log(JSON.stringify({ tarballSha256: digest, installed: install, results }, null, 2))
 } finally {
   rmSync(temporaryRoot, { recursive: true, force: true })

@@ -1,5 +1,5 @@
 import { randomBytes, randomUUID } from 'node:crypto'
-import type { ResolvedConfig } from './config.js'
+import type { ConfigSource, ResolvedConfig } from './config.js'
 import { normalizeImaHeaderCredential } from './credential-values.js'
 import { Semaphore } from './semaphore.js'
 import type { ImaAnswer, ImaCredentials, ImaReference } from './types.js'
@@ -33,14 +33,14 @@ export class ImaClient {
   private readonly semaphore: Semaphore
 
   /**
-   * @param config - resolved deployment configuration.
+   * @param config - current volatile deployment configuration.
    * @param fetchImpl - fetch implementation; overridden only by isolated tests.
    */
   constructor(
-    private readonly config: ResolvedConfig,
+    private readonly config: ConfigSource,
     private readonly fetchImpl: typeof fetch = fetch,
   ) {
-    this.semaphore = new Semaphore(config.concurrencyLimit)
+    this.semaphore = new Semaphore(() => this.config().concurrencyLimit)
   }
 
   /**
@@ -57,16 +57,17 @@ export class ImaClient {
     credentials: ImaCredentials,
     outerSignal: AbortSignal,
   ): Promise<ImaAnswer> {
+    const config = this.config()
     const normalizedCredentials = normalizeCredentials(credentials)
-    const signal = AbortSignal.any([outerSignal, AbortSignal.timeout(this.config.requestTimeoutMs)])
+    const signal = AbortSignal.any([outerSignal, AbortSignal.timeout(config.requestTimeoutMs)])
     const release = await this.semaphore.acquire(signal)
     try {
-      const auth = await this.refresh(normalizedCredentials, signal)
+      const auth = await this.refresh(normalizedCredentials, signal, config)
       let lastError: unknown
-      for (let attempt = 0; attempt <= this.config.retryCount; attempt += 1) {
+      for (let attempt = 0; attempt <= config.retryCount; attempt += 1) {
         try {
-          const sessionId = await this.initSession(knowledgeBaseId, auth, signal)
-          const parsed = await this.askSession(question, sessionId, auth, signal)
+          const sessionId = await this.initSession(knowledgeBaseId, auth, signal, config)
+          const parsed = await this.askSession(question, sessionId, auth, signal, config)
           if (parsed.answer.trim().length === 0 && parsed.codes.length === 1 && parsed.codes[0] === 3) {
             throw new ImaError('IMA returned Code 3 without answer text', true)
           }
@@ -75,7 +76,7 @@ export class ImaClient {
         } catch (error) {
           lastError = error
           if (signal.aborted) throw signal.reason
-          if (!(error instanceof ImaError) || !error.retryable || attempt === this.config.retryCount) throw error
+          if (!(error instanceof ImaError) || !error.retryable || attempt === config.retryCount) throw error
           await abortableDelay(Math.min(1_000 * 2 ** attempt, 10_000), signal)
         }
       }
@@ -85,7 +86,7 @@ export class ImaClient {
     }
   }
 
-  private async refresh(credentials: ImaCredentials, signal: AbortSignal): Promise<OperationAuth> {
+  private async refresh(credentials: ImaCredentials, signal: AbortSignal, config: ResolvedConfig): Promise<OperationAuth> {
     const userId = cookieValue(credentials.xImaCookie, 'IMA-UID')
     const refreshToken = cookieValue(credentials.xImaCookie, 'IMA-REFRESH-TOKEN')
       ?? cookieValue(credentials.xImaCookie, 'IMA-TOKEN')
@@ -96,7 +97,7 @@ export class ImaClient {
       signal,
       headers: this.headers(credentials, 'json'),
       body: JSON.stringify({ user_id: userId, refresh_token: refreshToken, token_type: 14 }),
-    })
+    }, config)
     const payload = await readJsonRecord(response, 'token refresh')
     const code = numberField(payload, 'code')
     const token = stringField(payload, 'token')
@@ -115,6 +116,7 @@ export class ImaClient {
     knowledgeBaseId: string,
     auth: OperationAuth,
     signal: AbortSignal,
+    config: ResolvedConfig,
   ): Promise<string> {
     const response = await this.request(INIT_SESSION_PATH, {
       signal,
@@ -127,7 +129,7 @@ export class ImaClient {
         forbidAutoAddToHistoryList: false,
         knowledgeBaseInfoWithFolder: { knowledgeBaseId, folderIds: [] },
       }),
-    })
+    }, config)
     const payload = await readJsonRecord(response, 'session initialization')
     const code = numberField(payload, 'code')
     const sessionId = stringField(payload, 'session_id')
@@ -149,6 +151,7 @@ export class ImaClient {
     sessionId: string,
     auth: OperationAuth,
     signal: AbortSignal,
+    config: ResolvedConfig,
   ): Promise<ParsedSse> {
     const guid = cookieValue(auth.xImaCookie, 'IMA-GUID') ?? 'default_guid'
     const response = await this.request(QUESTION_PATH, {
@@ -172,7 +175,7 @@ export class ImaClient {
         },
         client_tools: [],
       }),
-    })
+    }, config)
     const contentType = response.headers.get('content-type') ?? ''
     if (!contentType.includes('text/event-stream')) {
       const payload = await readJsonRecord(response, 'question')
@@ -186,10 +189,14 @@ export class ImaClient {
     return parseSse(response, signal)
   }
 
-  private async request(path: string, init: RequestInit & { signal: AbortSignal }): Promise<Response> {
+  private async request(
+    path: string,
+    init: RequestInit & { signal: AbortSignal },
+    config: ResolvedConfig,
+  ): Promise<Response> {
     let response: Response
     try {
-      response = await this.fetchImpl(`${this.config.baseUrl}${path}`, { ...init, method: 'POST' })
+      response = await this.fetchImpl(`${config.baseUrl}${path}`, { ...init, method: 'POST' })
     } catch (error) {
       if (init.signal.aborted) throw init.signal.reason
       throw new ImaError(`IMA network request failed: ${safeErrorMessage(error)}`, true)

@@ -1,5 +1,5 @@
-/** IMA-BASE-1 Host contract version. Diagnostic metadata only. */
-export const IMA_HOST_CONTRACT = 'IMA-BASE-1' as const
+/** IMA-BASE-2 Host contract version. Diagnostic metadata only. */
+export const IMA_HOST_CONTRACT = 'IMA-BASE-2' as const
 
 export interface ResolvedCredentialValue {
   value: string
@@ -34,11 +34,6 @@ export interface ImaToolSpec<Args, Value> {
   execute(args: Args, exec: ImaToolRunContext): Promise<Value>
 }
 
-export interface ImaSettingsScope<T> {
-  get(): T
-  watch(listener: () => void): () => void
-}
-
 interface NativeHostContext {
   readonly credentials: {
     resolve(ref: string): Promise<ResolvedCredentialValue | undefined>
@@ -47,17 +42,6 @@ interface NativeHostContext {
     register(tool: ImaToolDefinition): () => void
   }
   effect(callback: () => void | (() => void), label?: string): unknown
-  inject(names: readonly string[], callback: (context: NativeSettingsContext) => void): unknown
-}
-
-interface NativeSettingsContext extends NativeHostContext {
-  readonly settings: {
-    register<T>(
-      namespace: string,
-      schema: unknown,
-      options: { base: T; validate(value: T): void },
-    ): ImaSettingsScope<T>
-  }
 }
 
 /** Host operations consumed by IMA business code. Raw Harness contexts never cross this boundary. */
@@ -66,27 +50,13 @@ export interface ImaHostContract {
   resolveCredential(ref: string): Promise<ResolvedCredentialValue | undefined>
   registerTool(tool: ImaToolDefinition): () => void
   effect(callback: () => void | (() => void), label: string): void
-  withSettings<T>(
-    namespace: string,
-    schema: unknown,
-    options: { base: T; validate(value: T): void },
-    install: (scope: ImaSettingsScope<T>, settingsHost: ImaHostContract) => void,
-  ): void
 }
 
 const CREDENTIAL_REF_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/u
-const SETTINGS_NAMESPACE_PATTERN = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u
 
 export function validateCredentialReference(value: string): string {
   if (!CREDENTIAL_REF_PATTERN.test(value)) {
     throw new TypeError(`credential ref "${value}" must match ${String(CREDENTIAL_REF_PATTERN)}`)
-  }
-  return value
-}
-
-export function validateSettingsNamespace(value: string): string {
-  if (!SETTINGS_NAMESPACE_PATTERN.test(value)) {
-    throw new TypeError(`settings namespace "${value}" must match ${String(SETTINGS_NAMESPACE_PATTERN)}`)
   }
   return value
 }
@@ -172,13 +142,6 @@ export function createHostContract(context: unknown): ImaHostContract {
     resolveCredential: ref => ctx.credentials.resolve(validateCredentialReference(ref)),
     registerTool: tool => ctx.tools.register(tool),
     effect(callback, label) { void ctx.effect(callback, label) },
-    withSettings(namespace, schema, options, install) {
-      const validatedNamespace = validateSettingsNamespace(namespace)
-      void ctx.inject(['settings'], settingsContext => {
-        const scope = settingsContext.settings.register(validatedNamespace, schema, options)
-        install(scope, createHostContract(settingsContext))
-      })
-    },
   }
   return contract
 }

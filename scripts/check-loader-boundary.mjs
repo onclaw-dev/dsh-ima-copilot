@@ -4,7 +4,7 @@ import { join, resolve, relative } from 'node:path'
 
 const root = resolve(import.meta.dirname, '..')
 const sourceRoot = resolve(root, 'src')
-const allowedNativeBoundary = new Set(['compat/host.ts'])
+const allowedNativeBoundary = new Set(['compat/host.ts', 'config.ts'])
 const nativeImports = /from ['"]@deepseek-ai\/(?:cordis|dsh-credentials|dsh-settings|dsh-tools|dsh-api-remotes|dsh-client-connection)/u
 const forbiddenBusinessTerms = /IMA-HIF-|IMA-ADAPTER-|ConnectionHandle|IApiClient|RpcResponse|RemoteResult/u
 
@@ -21,4 +21,4 @@ for (const path of files(sourceRoot)) {
   if (!allowedNativeBoundary.has(name)) assert.doesNotMatch(source, nativeImports, `${name}: native Harness import escaped compatibility boundary`)
   if (!name.startsWith('compat/')) assert.doesNotMatch(source, forbiddenBusinessTerms, `${name}: interface-family detail escaped compatibility boundary`)
 }
-console.log('IMA-BASE-1 loader and business boundaries verified.')
+console.log('IMA-BASE-2 loader and business boundaries verified.')

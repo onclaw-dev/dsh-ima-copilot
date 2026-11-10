@@ -40,7 +40,7 @@ const links = {
   'dsh-client-connection': 'packages/client/connection',
   'dsh-client-ui-renderer': 'packages/client/ui-renderer',
   'dsh-client-ui-slots': 'packages/client/ui-slots',
-  'dsh-client-ui-settings-plugins': 'packages/client/ui-settings-plugins',
+  'dsh-client-ui-settings': 'packages/client/ui-settings',
 }
 
 const scope = resolve('node_modules/@deepseek-ai')

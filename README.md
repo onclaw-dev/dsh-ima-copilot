@@ -20,7 +20,7 @@ Python 服务或常驻子进程。
 
 - Node.js `^22.19.0` 或 `>=24.0.0`
 - 兼容的 DSH 版本见[版本兼容验证矩阵](#版本兼容验证矩阵)
-- Web 设置页需要 `@deepseek-ai/dsh-client-ui-settings-plugins`
+- Web 设置页需要 `@deepseek-ai/dsh-client-ui-settings`
 
 从 npm 安装：
 
@@ -44,7 +44,7 @@ dsh --profile web --dump-config
 
 ## 配置
 
-打开“设置 → 插件 → IMA Copilot”，填写：
+打开“设置 → IMA Copilot”，填写：
 
 | 字段 | DSH 凭证引用 | 说明 |
 | --- | --- | --- |
@@ -97,27 +97,21 @@ dsh --profile web --dump-config
 
 ## 版本兼容验证矩阵
 
-下表最后验证于 2026-09-09。“通过”表示同一个未改写插件包已在该 DSH Release 的精确依赖
-环境中完成安装、Client 启动和 Host 工具契约测试；不等同于使用真实 IMA 凭证完成在线问答。
+下表最后验证于 2026-11-11。“通过”表示同一个未改写插件 tarball 已在该范围内每个 DSH
+Release 的精确依赖环境中完成隔离安装、依赖身份检查、Client bundle smoke 和 Host 接口检查。
 
 | DeepSeek Harness Release | 适配接口 | 结果 | 说明 |
 | --- | --- | --- | --- |
-| `dsh-v0.1.0-rc.7` | Connection | 通过 | 已完成同包验证 |
-| `dsh-v0.1.0-rc.8` | Connection | 通过 | 已完成同包验证 |
-| `dsh-v0.1.1-rc.1` | Connection | 通过 | 已完成同包验证 |
-| `dsh-v0.1.1-rc.2` | Connection | 通过 | 已完成同包验证 |
-| `dsh-v0.1.2-alpha.1` | Gateway Remote | 不支持 | 上游 Node 24 Client Loader 缺陷，仅完成源码审计 |
-| `dsh-v0.1.2-alpha.2` | Gateway Remote | 通过 | 已完成同包验证 |
-| `dsh-v0.1.2-alpha.3` | Gateway Remote | 通过 | 已完成同包验证 |
-| `dsh-v0.1.2-alpha.4` | Gateway Remote | 通过 | 已完成同包验证 |
-| `dsh-v0.1.2-alpha.5` | Gateway Remote | 通过 | 已完成同包验证 |
-| `dsh-v0.1.2-rc.1` | Gateway Remote | 通过 | 已完成同包验证 |
-| `dsh-v0.1.3-alpha.1` | Gateway Remote | 不支持 | 精确依赖未发布，不能声明 registry 安装支持 |
-| `dsh-v0.1.3-alpha.2` | Gateway Remote | 通过 | 已覆盖凭证服务延迟就绪场景 |
-| `dsh-v0.1.5-alpha.1` | Gateway Remote | 通过 | 已完成同包验证 |
+| `dsh-v0.1.0-rc.7` ～ `dsh-v0.1.1-rc.2` | Static Config + `connection.api.credentials` + `settings.section` | package/bundle smoke 4/4 | 使用 legacy envelope adapter |
+| `dsh-v0.1.2-alpha.2` ～ `dsh-v0.1.6-alpha.2` | Static Config + `remote.credentials` + `settings.section` | package/bundle smoke 13/14 | `dsh-v0.1.3-alpha.1` 的精确 npm 包未发布 |
+| `dsh-v0.1.7-alpha.1` ～ `dsh-v0.2.2-rc.1` | Volatile Config + `remote.credentials` + `settings.section` | package/bundle smoke 19/19 | 使用当前基线接口 |
 
-真实凭证在线验证未执行。IMA Web API 并非公开稳定 API，上游字段、鉴权或响应格式变化时，
-插件可能需要同步更新。
+开发基线仍为 `dsh-v0.2.2-rc.1`，运行时以能力探测选择 legacy 或 gateway 凭证协议；完整的
+逐 tag commit、接口族、adapter 和验证状态见
+[`docs/harness-interface-contract-audit.md`](./docs/harness-interface-contract-audit.md)。环境契约排除的
+`dsh-v0.1.2-alpha.1` 不在适配范围内。
+
+IMA Web API 并非公开稳定 API，上游字段、鉴权或响应格式变化时，插件可能需要同步更新。
 
 ## 许可与说明
 

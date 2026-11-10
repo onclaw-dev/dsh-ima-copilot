@@ -4,16 +4,15 @@ import {
 } from './credentials.js'
 import { IMA_CREDENTIAL_REFS, IMA_KNOWLEDGE_BASE_IDS_REF } from '../credential-refs.js'
 
-/** Injected browser operations for the IMA settings card. */
+/** Injected browser operations for the IMA settings section. */
 export interface ImaSettingsCardFace {
   credentials: ImaCredentialsClient
 }
 
 export type ImaSettingsCardProps = ImaSettingsCardFace
 
-/** Harness settings card for dynamic IMA authentication and knowledge-base state. */
+/** Standalone Harness settings page for IMA authentication and knowledge-base state. */
 export function ImaSettingsCard(props: ImaSettingsCardProps) {
-  const [open, setOpen] = useState(false)
   const [values, setValues] = useState<Record<string, string>>({})
   const [state, setState] = useState<Record<string, CredentialState>>({})
   const [saving, setSaving] = useState(false)
@@ -43,30 +42,18 @@ export function ImaSettingsCard(props: ImaSettingsCardProps) {
 
   const stored = IMA_RUNTIME_REFS.every(ref => state[ref]?.configured === true)
   const dirty = IMA_RUNTIME_REFS.some(ref => (values[ref]?.trim().length ?? 0) > 0)
-  const bodyId = 'ima-copilot-settings-body'
 
   return (
-    <li style={styles.card} data-testid="ima-settings-card">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls={bodyId}
-        aria-label={`${open ? '收起' : '展开'} IMA Copilot 配置`}
-        onClick={() => setOpen(current => !current)}
-        style={styles.header}
-      >
-        <span style={styles.heading}>
-          <span style={styles.titleRow}>
-            <strong style={styles.title}>IMA Copilot</strong>
-            {dirty ? <span style={styles.pending}>有未保存修改</span> : null}
-          </span>
-          <span style={styles.summary}>配置 IMA 认证与知识库。</span>
+    <section style={styles.page} data-testid="ima-settings-card">
+      <header style={styles.pageHeader}>
+        <span style={styles.titleRow}>
+          <h1 style={styles.title}>IMA Copilot</h1>
+          {dirty ? <span style={styles.pending}>有未保存修改</span> : null}
         </span>
-        <Chevron open={open} />
-      </button>
-
-      {open ? (
-        <div id={bodyId} style={styles.body}>
+        <p style={styles.summary}>配置 IMA 认证与知识库。</p>
+      </header>
+      <div style={styles.card}>
+        <div style={styles.body}>
           <p style={styles.description}>
             更新从 ima.qq.com 获取的认证信息和知识库 ID。ima_ask 会在每次调用前读取最新配置，
             无需重启。
@@ -124,22 +111,8 @@ export function ImaSettingsCard(props: ImaSettingsCardProps) {
             X-Ima-Bkn，并同时替换。
           </small>
         </div>
-      ) : null}
-    </li>
-  )
-}
-
-function Chevron({ open }: { open: boolean }) {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 16 16"
-      width="16"
-      height="16"
-      style={{ ...styles.chevron, transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
-    >
-      <path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+      </div>
+    </section>
   )
 }
 
@@ -161,27 +134,21 @@ function FieldState({ state }: { state: CredentialState | undefined }) {
 }
 
 const styles: Record<string, CSSProperties> = {
+  page: { display: 'grid', gap: 24 },
+  pageHeader: { display: 'grid', gap: 8 },
   card: {
     listStyle: 'none', border: '1px solid var(--dsh-border-color, #d7d7d7)', borderRadius: 12,
     overflow: 'hidden', background: 'var(--dsh-card-background, transparent)',
   },
-  header: {
-    width: '100%', border: 0, padding: 16, display: 'flex', alignItems: 'center',
-    justifyContent: 'space-between', gap: 16, background: 'transparent', color: 'inherit',
-    textAlign: 'left', cursor: 'pointer', font: 'inherit',
-  },
-  heading: { minWidth: 0, display: 'grid', gap: 7 },
   titleRow: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
-  title: { fontSize: 16, lineHeight: 1.35 },
-  summary: { opacity: 0.65, lineHeight: 1.4 },
+  title: { margin: 0, fontSize: 28, lineHeight: 1.35 },
+  summary: { margin: 0, opacity: 0.65, lineHeight: 1.4 },
   pending: {
     borderRadius: 999, padding: '2px 8px', fontSize: 12, fontWeight: 500,
     color: '#9a5b00', background: 'rgba(196, 122, 0, 0.12)',
   },
-  chevron: { flex: '0 0 auto', opacity: 0.6, transition: 'transform 160ms ease' },
   body: {
-    borderTop: '1px solid var(--dsh-border-color, #e2e2e2)', padding: '16px',
-    display: 'grid', gap: 16,
+    padding: '20px', display: 'grid', gap: 16,
   },
   description: { margin: 0, opacity: 0.75, lineHeight: 1.6 },
   ready: { margin: 0, color: '#287a3d' },

@@ -2,7 +2,7 @@ import { readFile, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
-const checkout = process.argv[2] ?? process.env.DSH_HARNESS_CHECKOUT ?? '/Users/roncao/deepseek-harness/dsh-v0.1.1-rc.2'
+const checkout = process.argv[2] ?? process.env.DSH_HARNESS_CHECKOUT ?? '/Users/roncao/deepseek-harness/dsh-v0.2.2-rc.1'
 const appBoot = await import(pathToFileURL(join(checkout, 'packages/boot/app-boot/lib/index.js')).href)
 const { loadLayeredEnv } = appBoot
 const cliLib = join(checkout, 'apps/cli/lib')

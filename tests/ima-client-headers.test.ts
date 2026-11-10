@@ -17,7 +17,7 @@ describe('IMA request credential headers', () => {
       .mockResolvedValueOnce(new Response('data: {"content":"answer"}\n\n', {
         headers: { 'content-type': 'text/event-stream' },
       }))
-    const client = new ImaClient(config, fetchImpl as unknown as typeof fetch)
+    const client = new ImaClient(() => config, fetchImpl as unknown as typeof fetch)
 
     await expect(client.ask(
       'question',
@@ -39,7 +39,7 @@ describe('IMA request credential headers', () => {
 
   it('reports other non-ByteString characters without exposing the credential', async () => {
     const fetchImpl = vi.fn()
-    const client = new ImaClient(config, fetchImpl as unknown as typeof fetch)
+    const client = new ImaClient(() => config, fetchImpl as unknown as typeof fetch)
 
     await expect(client.ask(
       'question',

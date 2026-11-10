@@ -4,7 +4,7 @@ import { join, resolve, relative } from 'node:path'
 
 const root = resolve(import.meta.dirname, '..')
 const typesRoot = resolve(root, 'lib/types')
-const forbiddenNative = /@deepseek-ai\/dsh-(?:api-remotes|client-connection|client-ui-renderer|client-ui-settings-plugins|client-ui-slots|credentials|settings|tools)/u
+const forbiddenNative = /@deepseek-ai\/dsh-(?:api-remotes|client-connection|client-ui-renderer|client-ui-settings(?:-plugins)?|client-ui-slots|credentials|settings|tools)/u
 const forbiddenWire = /\b(?:ConnectionHandle|IApiClient|RpcResponse|RemoteResult)\b/u
 
 function declarations(directory) {

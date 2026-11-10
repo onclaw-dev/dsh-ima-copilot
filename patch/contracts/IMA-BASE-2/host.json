@@ -1,0 +1,16 @@
+{
+  "id": "IMA-BASE-2",
+  "surface": "host",
+  "operations": {
+    "resolveCredential": { "input": ["reference"], "output": "resolved value or absent", "secrets": "operation-local" },
+    "registerTool": { "input": ["IMA tool definition"], "output": "disposer" },
+    "readConfig": { "input": ["plain or volatile plugin Config"], "output": "validated operation snapshot" },
+    "lifecycleEffect": { "input": ["effect", "diagnostic label"], "output": "disposer ownership" }
+  },
+  "invariants": [
+    "credentials are resolved for every tool call",
+    "plain and volatile configuration produce the same validated operation snapshot",
+    "tool cancellation is forwarded",
+    "raw Harness Context does not enter business code"
+  ]
+}

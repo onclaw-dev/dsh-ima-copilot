@@ -1,4 +1,4 @@
-import type { ResolvedConfig } from './config.js';
+import type { ConfigSource } from './config.js';
 import type { ImaAnswer, ImaCredentials } from './types.js';
 /** IMA failure with an explicit retry classification. */
 export declare class ImaError extends Error {
@@ -13,10 +13,10 @@ export declare class ImaClient {
     private readonly fetchImpl;
     private readonly semaphore;
     /**
-     * @param config - resolved deployment configuration.
+     * @param config - current volatile deployment configuration.
      * @param fetchImpl - fetch implementation; overridden only by isolated tests.
      */
-    constructor(config: ResolvedConfig, fetchImpl?: typeof fetch);
+    constructor(config: ConfigSource, fetchImpl?: typeof fetch);
     /**
      * Execute one isolated knowledge-base question.
      * @param question - non-empty user question.

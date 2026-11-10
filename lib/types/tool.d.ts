@@ -1,4 +1,4 @@
-import type { ResolvedConfig } from './config.js';
+import type { ConfigSource } from './config.js';
 import { ImaClient } from './ima-client.js';
 import { type ImaHostContract, type ImaToolDefinition } from './compat/host.js';
 import type { ImaCredentials } from './types.js';
@@ -11,7 +11,7 @@ export declare const IMA_TOOL_NAME = "ima_ask";
  * @param client - IMA transport client.
  * @returns registry-ready native tool definition.
  */
-export declare function createImaTool(host: ImaHostContract, config: ResolvedConfig, client: ImaClient): ImaToolDefinition;
+export declare function createImaTool(host: ImaHostContract, config: ConfigSource, client: ImaClient): ImaToolDefinition;
 /** Dynamic IMA state checked immediately before one tool operation. */
 export interface ImaRuntimeState {
     credentials: ImaCredentials;

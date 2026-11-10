@@ -1,5 +1,5 @@
-/** IMA-BASE-1 Client contract version. Diagnostic metadata only. */
-export declare const IMA_CLIENT_CONTRACT: "IMA-BASE-1";
+/** IMA-BASE-2 Client contract version. Diagnostic metadata only. */
+export declare const IMA_CLIENT_CONTRACT: "IMA-BASE-2";
 export interface CredentialState {
     configured: boolean;
     writable: boolean;
@@ -14,16 +14,28 @@ export interface ImaClientContext {
     readonly slots?: unknown;
     readonly remote?: unknown;
     get?(name: string): unknown;
+    inject?(services: readonly string[], apply: (ctx: ImaClientContext) => unknown): {
+        dispose(): unknown;
+    };
 }
 export interface ImaSlotsClient {
     inject(name: string, install: () => unknown): unknown;
     register(options: {
         name: string;
-        key: string;
+        id: string;
+        order?: number;
+        label?: string | (() => string);
         inject(): {
             credentials: ImaCredentialsClient;
         };
     }, component: unknown): unknown;
+}
+interface GatewayResult<T> {
+    ok: boolean;
+    value?: T;
+    error?: {
+        message?: string;
+    };
 }
 interface LegacyResult<T> {
     result: {
@@ -47,13 +59,6 @@ interface LegacyCredentials {
         value: string;
     }): Promise<LegacyResult<unknown>>;
 }
-interface GatewayResult<T> {
-    ok: boolean;
-    value?: T;
-    error?: {
-        message?: string;
-    };
-}
 interface GatewayCredentials {
     describe(refs: string[]): Promise<GatewayResult<Record<string, CredentialState>>>;
     set(ref: string, value: string): Promise<GatewayResult<void>>;
@@ -63,9 +68,13 @@ export declare class UnsupportedHarnessClientError extends Error {
     readonly code = "IMA_UNSUPPORTED_HARNESS_CLIENT";
     constructor(missing: readonly string[]);
 }
-export declare function createLegacyCredentialsAdapter(credentials: LegacyCredentials): ImaCredentialsClient;
 export declare function createGatewayCredentialsAdapter(credentials: GatewayCredentials): ImaCredentialsClient;
-/** Inspect complete capabilities without invoking a credential operation. Gateway wins when both exist. */
+export declare function createLegacyCredentialsAdapter(credentials: LegacyCredentials): ImaCredentialsClient;
+/** Resolve only the native gateway capability for a lifecycle-gated child context. */
+export declare function findGatewayCredentials(ctx: ImaClientContext): ImaCredentialsClient | undefined;
+/** Resolve only the historical connection capability for a lifecycle-gated child context. */
+export declare function findLegacyCredentials(ctx: ImaClientContext): ImaCredentialsClient | undefined;
+/** Resolve the newest complete credential protocol, then fall back to the legacy API envelope. */
 export declare function createClientCredentials(ctx: ImaClientContext): ImaCredentialsClient;
 export declare function getSlotsClient(ctx: ImaClientContext): ImaSlotsClient;
 export {};

@@ -1,6 +1,6 @@
 /** Native DeepSeek Harness Host plugin for Tencent IMA Copilot. */
 import { Config, resolveConfig, type Config as ImaPluginConfig } from './config.js'
-import { createHostContract, type ImaSettingsScope } from './compat/host.js'
+import { createHostContract } from './compat/host.js'
 import { ImaClient } from './ima-client.js'
 import { createImaTool } from './tool.js'
 
@@ -23,9 +23,6 @@ export const name = 'dsh-ima-copilot'
 /** Harness services required by the Host entry. */
 export const inject = ['tools', 'credentials']
 
-/** Settings namespace paired with the Web configuration card. */
-export const IMA_SETTINGS_NAMESPACE = 'ima-copilot'
-
 /**
  * Register the native IMA tool for this plugin fiber.
  * @param ctx - Harness Host context.
@@ -33,30 +30,11 @@ export const IMA_SETTINGS_NAMESPACE = 'ima-copilot'
  */
 export function apply(context: unknown, config: ImaPluginConfig): void {
   const host = createHostContract(context)
-  let settingsScope: ImaSettingsScope<ImaPluginConfig> | undefined
-  const source = (): ImaPluginConfig => settingsScope?.get() ?? config
-  let disposeTool: () => void = () => {}
-  const registerTool = (): void => {
-    disposeTool()
-    const resolved = resolveConfig(source())
-    disposeTool = host.registerTool(createImaTool(host, resolved, new ImaClient(resolved)))
-  }
+  const source = () => resolveConfig(config)
+  const client = new ImaClient(source)
 
   host.effect(() => {
-    registerTool()
+    const disposeTool = host.registerTool(createImaTool(host, source, client))
     return () => { disposeTool() }
   }, 'ima-copilot: native tool registration')
-
-  host.withSettings(IMA_SETTINGS_NAMESPACE, Config, {
-    base: config,
-    validate: (value) => { resolveConfig(value) },
-  }, (scope, settingsHost) => {
-    settingsScope = scope
-    registerTool()
-    const unwatch = scope.watch(() => { registerTool() })
-    settingsHost.effect(() => () => {
-      unwatch()
-      if (settingsScope === scope) settingsScope = undefined
-    }, 'ima-copilot: settings section')
-  })
 }

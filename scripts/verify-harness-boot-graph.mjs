@@ -40,12 +40,12 @@ for (const record of snapshot.records) {
   const checkout = join(checkoutsRoot, record.manifest.tag)
   assert.ok(existsSync(checkout), `${record.manifest.tag}: checkout missing`)
   const closure = providerClosure(checkout, snapshot.index.providerInjection)
-  for (const required of ['@deepseek-ai/dsh-client-connection', '@deepseek-ai/dsh-client-ui-settings-plugins', '@deepseek-ai/dsh-api-remotes']) {
+  for (const required of ['@deepseek-ai/dsh-client-ui-settings', '@deepseek-ai/dsh-api-remotes']) {
     assert.ok(closure.has(required), `${record.manifest.tag}: closure misses ${required}`)
   }
   // ui-slots is a Web profile platform service rather than a package-injection node
   // in legacy manifests; the plugin-level `inject` declaration gates on it.
-  if (record.manifest.interfaceFamily !== 'IMA-HIF-1') assert.ok(closure.has('@deepseek-ai/dsh-api-gateway'))
+  assert.ok(closure.has('@deepseek-ai/dsh-api-gateway'))
   results.push({ tag: record.manifest.tag, providers: closure.size })
 }
 console.log(JSON.stringify({ injection: snapshot.index.providerInjection, results }, null, 2))
